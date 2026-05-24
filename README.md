@@ -53,3 +53,16 @@ and works with full GPU acceleration out of the box.
 | Frontend | ES-DE | EmulationStation | EmulationStation |
 | Gamepad setup | OOBE wizard | Manual | Manual |
 | External storage | Auto-detect | Manual | Manual |
+
+
+## License
+
+PulsarOS-specific code (device tree, build scripts, OOBE app, overlays)
+is licensed under the **GNU General Public License v3.0** — see [LICENSE](LICENSE).
+
+Third-party components retain their original licenses:
+- EmulationStation-DE: MIT
+- TV Bro (browser): Apache 2.0
+- RetroArch: GPL v3 (distributed as prebuilt APK, not modified)
+- Kodi: GPL v2+ (distributed as prebuilt APK, not modified)
+- AOSP Android 12: Apache 2.0
