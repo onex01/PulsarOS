@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- PulsarOS — ES-DE settings -->
+<config>
+    <!-- Путь к ROMs: PulsarOS storage layout -->
+    <string name="ROMDirectory" value="/storage/PulsarOS/roms" />
+    <string name="DataDirectory" value="/data/media/0/ES-DE" />
+    <string name="MediaDirectory" value="/data/media/0/ES-DE/downloaded_media" />
+
+    <!-- UI -->
+    <string name="UIMode" value="Full" />
+    <string name="DefaultSortOrder" value="filename, ascending" />
+    <bool name="ParseGamelistOnly" value="false" />
+    <bool name="ShowHiddenFiles" value="false" />
+    <bool name="ShowHiddenGames" value="false" />
+
+    <!-- Геймпад -->
+    <bool name="InputOnlyFirstController" value="false" />
+
+    <!-- Тема -->
+    <string name="ThemeSet" value="modern-es-de" />
+
+    <!-- Производительность -->
+    <bool name="VideoHardwareDecoding" value="true" />
+    <bool name="FoldersOnTop" value="true" />
+</config>

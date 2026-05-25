@@ -1,0 +1,32 @@
+# =============================================================================
+# PulsarOS — init.rc сервисы
+# Подключается через pulsaros.mk: PRODUCT_COPY_FILES
+# =============================================================================
+
+on boot
+    # Storage watcher — запускаем после монтирования userdata
+    start pulsaros-storage
+
+    # SSH — только в debug сборке (в release управляется вручную)
+    setprop ro.pulsaros.ssh ${PULSAROS_SSH_ENABLED}
+
+on property:ro.pulsaros.ssh=true
+    start pulsaros-ssh
+
+on property:sys.boot_completed=1
+    # После полной загрузки — убеждаемся что storage watcher жив
+    start pulsaros-storage
+
+service pulsaros-storage /system/bin/pulsaros-storage-watcher
+    class late_start
+    user system
+    group system sdcard_rw
+    seclabel u:r:shell:s0
+    oneshot
+
+service pulsaros-ssh /system/bin/dropbear -p 2222 -r /data/ssh/dropbear_rsa_host_key -F -E
+    class late_start
+    user root
+    group root
+    disabled
+    oneshot
