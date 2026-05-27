@@ -1,57 +1,116 @@
 #!/usr/bin/env bash
-# PulsarOS Build Script
-# SPDX-License-Identifier: MIT
+# PulsarOS build script
+# Usage: ./scripts/build.sh [build|clean|sync] [user|userdebug|eng]
 set -eo pipefail
 
-REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-ANDROID_SRC="${ANDROID_SRC:-/mnt/OHDD/H618-Android12-Src}"
-PULSAROS_VERSION="$(cat "$REPO_ROOT/VERSION")"
-export PULSAROS_VERSION
+# ── Config ────────────────────────────────────────────────────────────────────
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PULSAR_VERSION="$(cat "${SCRIPT_DIR}/../VERSION" 2>/dev/null || echo "0.1.0-dev")"
+REPO_DIR="${SCRIPT_DIR}/.."
+ANDROID_SRC="${ANDROID_SRC:-/mnt/OHDD/H618-Android12-Src}"   # override via env
+PRODUCT="pulsaros_zero3"
+JOBS="${JOBS:-$(nproc)}"
 
-RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; NC='\033[0m'
-info()  { echo -e "${GREEN}[INFO]${NC} $*"; }
-warn()  { echo -e "${YELLOW}[WARN]${NC} $*"; }
-error() { echo -e "${RED}[ERROR]${NC} $*" >&2; exit 1; }
+# ── Colors ───────────────────────────────────────────────────────────────────
+RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'
+CYAN='\033[0;36m'; NC='\033[0m'
+info()  { echo -e "${CYAN}[INFO]${NC}  $*"; }
+ok()    { echo -e "${GREEN}[OK]${NC}    $*"; }
+warn()  { echo -e "${YELLOW}[WARN]${NC}  $*"; }
+die()   { echo -e "${RED}[ERROR]${NC} $*" >&2; exit 1; }
 
+# ── Args ─────────────────────────────────────────────────────────────────────
+ACTION="${1:-build}"
+VARIANT="${2:-userdebug}"
+
+[[ "$VARIANT" =~ ^(user|userdebug|eng)$ ]] \
+    || die "Unknown variant '$VARIANT'. Use: user | userdebug | eng"
+
+# ── Sync overlays ─────────────────────────────────────────────────────────────
 sync_overlays() {
-    info "Syncing PulsarOS overlays to $ANDROID_SRC"
-    for sub in device vendor packages; do
-        if [[ -d "$REPO_ROOT/$sub" ]]; then
-            mkdir -p "$ANDROID_SRC/$sub"
-            rsync -a --delete \
-                --exclude='*/ConsoleLauncher/' \
-                --exclude='*/TVBro/' \
-                --exclude='*/RetroArch/' \
-                --exclude='*/Kodi/' \
-                --exclude='*/EmulationStationDE/' \
-                "$REPO_ROOT/$sub/" "$ANDROID_SRC/$sub/"
-            info "  $sub/ synced"
+    info "Syncing PulsarOS overlays to ${ANDROID_SRC}"
+    for dir in device vendor packages; do
+        src="${REPO_DIR}/${dir}"
+        dst="${ANDROID_SRC}/${dir}"
+        if [[ -d "$src" ]]; then
+            rsync -a --delete "${src}/" "${dst}/"
+            ok "  ${dir}/ synced"
+        else
+            warn "  ${dir}/ not found in repo, skipping"
         fi
     done
 }
 
-update_submodules() {
-    info "Updating git submodules"
-    ( cd "$REPO_ROOT" && git submodule update --init --recursive --jobs=4 )
-}
+# ── Build ─────────────────────────────────────────────────────────────────────
+do_build() {
+    info "Building PulsarOS v${PULSAR_VERSION} (${VARIANT})"
 
-build_android() {
-    local type="${1:-userdebug}"
-    info "Building PulsarOS v$PULSAROS_VERSION ($type)"
-    cd "$ANDROID_SRC"
-    export USE_CCACHE=1
-    export CCACHE_EXEC=/usr/bin/ccache
-    command -v ccache &>/dev/null && ccache -M 60G || warn "ccache not found"
+    cd "${ANDROID_SRC}"
+
+    # Validate Android source tree
+    [[ -f "build/envsetup.sh" ]] \
+        || die "Android source not found at ${ANDROID_SRC}. Set ANDROID_SRC env var."
+
+    # shellcheck disable=SC1091
     source build/envsetup.sh
-    lunch "pulsaros_zero3-$type"
-    export BUILD_NUMBER="${PULSAROS_BUILD_NUMBER:-0}"
-    m -j"$(nproc)" target-files-package otatools
-    info "Build complete: out/target/product/zero3/"
+
+    # lunch target: pulsaros_zero3-userdebug
+    local LUNCH_TARGET="${PRODUCT}-${VARIANT}"
+    info "Running: lunch ${LUNCH_TARGET}"
+    lunch "${LUNCH_TARGET}" \
+        || die "lunch failed. Check device/orangepi/zero3/AndroidProducts.mk"
+
+    # CCACHE
+    if command -v ccache &>/dev/null; then
+        export USE_CCACHE=1
+        export CCACHE_EXEC="$(command -v ccache)"
+        ccache -M "${CCACHE_SIZE:-60G}"
+    else
+        warn "ccache not found — build will be slower"
+    fi
+
+    # Export version info into the build
+    export PULSAR_VERSION
+    export PULSAR_BUILD_TYPE="${VARIANT}"
+    export BUILD_DATETIME="$(date -u +%s)"
+    export BUILD_USERNAME="${USER}"
+    export BUILD_HOSTNAME="$(hostname)"
+
+    info "Starting make -j${JOBS} (this will take a while…)"
+    make -j"${JOBS}" \
+        || die "make failed — check build output above"
+
+    ok "Build complete → out/target/product/zero3/"
+    _print_artifacts
 }
 
-case "${1:-help}" in
-    sync)   sync_overlays; update_submodules ;;
-    build)  sync_overlays; build_android "${2:-userdebug}" ;;
-    clean)  ( cd "$ANDROID_SRC" && make clobber ) ;;
-    *)      echo "Usage: $0 {sync|build [userdebug|user|eng]|clean}"; exit 1 ;;
+_print_artifacts() {
+    local out="${ANDROID_SRC}/out/target/product/zero3"
+    echo ""
+    echo "  Artifacts:"
+    for f in boot.img system.img vendor.img; do
+        [[ -f "${out}/${f}" ]] \
+            && echo "    ${GREEN}✓${NC} ${out}/${f}" \
+            || echo "    ${RED}✗${NC} ${out}/${f} (missing)"
+    done
+}
+
+# ── Clean ─────────────────────────────────────────────────────────────────────
+do_clean() {
+    warn "Cleaning out/target/product/zero3 …"
+    cd "${ANDROID_SRC}"
+    source build/envsetup.sh
+    lunch "${PRODUCT}-${VARIANT}"
+    make clean
+    ok "Clean done"
+}
+
+# ── Main ─────────────────────────────────────────────────────────────────────
+sync_overlays
+
+case "${ACTION}" in
+    build) do_build ;;
+    clean) do_clean ;;
+    sync)  ok "Overlays synced, no build requested." ;;
+    *)     die "Unknown action '${ACTION}'. Use: build | clean | sync" ;;
 esac

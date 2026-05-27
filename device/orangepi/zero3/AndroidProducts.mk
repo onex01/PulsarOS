@@ -1,5 +1,5 @@
 PRODUCT_MAKEFILES := \
-    $(LOCAL_DIR)/pulsaros.mk
+    $(LOCAL_DIR)/pulsaros_zero3.mk
 
 COMMON_LUNCH_CHOICES := \
     pulsaros_zero3-userdebug \
