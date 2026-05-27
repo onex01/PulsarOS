@@ -4,7 +4,7 @@
 set -eo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-ANDROID_SRC="${ANDROID_SRC:-/mnt/wwn-0x50014ee60877474c-part1/unpuck/out/H618-Android12-Src}"
+ANDROID_SRC="${ANDROID_SRC:-/mnt/OHDD/H618-Android12-Src}"
 PULSAROS_VERSION="$(cat "$REPO_ROOT/VERSION")"
 export PULSAROS_VERSION
 
