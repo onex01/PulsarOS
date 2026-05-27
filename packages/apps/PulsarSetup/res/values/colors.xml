@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="pulsar_bg">#0B0C10</color>
+    <color name="pulsar_accent">#66FCF1</color>
+    <color name="pulsar_text">#FFFFFF</color>
+    <color name="pulsar_text_secondary">#A8B2D1</color>
+</resources>

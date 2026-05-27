@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Allow haptic feedback for gaming controllers -->
+<config>
+    <allow-vibrator package="com.pulsaros.consolelauncher"/>
+    <allow-vibrator package="com.retroarch"/>
+    <allow-vibrator package="org.esde.emulationstation"/>
+</config>

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     Copyright (C) 2026 PulsarOS Project
+     SPDX-License-Identifier: MIT
+-->
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+
+    <!-- Default launcher: Console Launcher -->
+    <string name="config_defaultHomeComponent" translatable="false">
+        com.pulsaros.consolelauncher/.MainActivity
+    </string>
+
+    <!-- Disable TV Input Framework -->
+    <bool name="config_enableTvInputService">false</bool>
+
+    <!-- Allow install from unknown sources during OOBE -->
+    <bool name="config_enableInstallerPackage">true</bool>
+
+    <!-- Use our custom OOBE -->
+    <string name="config_setupWizardComponent" translatable="false">
+        com.pulsaros.setup/.SetupActivity
+    </string>
+
+    <!-- Gamepad navigation -->
+    <bool name="config_useGamepadNavigation">true</bool>
+
+    <!-- Disable ambient display (save power on SBC) -->
+    <bool name="config_dozeAfterScreenOff">false</bool>
+
+    <!-- Hardware compositor -->
+    <bool name="config_forceHwcCompose">true</bool>
+
+</resources>

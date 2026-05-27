@@ -1,32 +1,33 @@
-# =============================================================================
-# PulsarOS — init.rc сервисы
-# Подключается через pulsaros.mk: PRODUCT_COPY_FILES
-# =============================================================================
+# PulsarOS Init Configuration
+# SPDX-License-Identifier: MIT
 
-on boot
-    # Storage watcher — запускаем после монтирования userdata
-    start pulsaros-storage
-
-    # SSH — только в debug сборке (в release управляется вручную)
-    setprop ro.pulsaros.ssh ${PULSAROS_SSH_ENABLED}
-
-on property:ro.pulsaros.ssh=true
-    start pulsaros-ssh
+on post-fs-data
+    mkdir /data/pulsaros 0750 system system
+    mkdir /data/pulsaros/ssh 0700 system system
 
 on property:sys.boot_completed=1
-    # После полной загрузки — убеждаемся что storage watcher жив
-    start pulsaros-storage
+    chmod 0755 /vendor/bin/storage-watcher.sh
+    chmod 0755 /vendor/bin/ssh-toggle.sh
+    chmod 0755 /vendor/bin/set-resolution.sh
+    start storage-watcher
+    # Auto-start SSH only if debug build
+    exec u:r:su:s0 -- /system/bin/sh -c "[ \"$(getprop ro.build.type)\" = \"userdebug\" ] && /vendor/bin/ssh-toggle.sh start"
 
-service pulsaros-storage /system/bin/pulsaros-storage-watcher
+service storage-watcher /vendor/bin/sh /vendor/bin/storage-watcher.sh
     class late_start
-    user system
-    group system sdcard_rw
-    seclabel u:r:shell:s0
-    oneshot
+    user root
+    group root sdcard_rw
+    disabled
 
-service pulsaros-ssh /system/bin/dropbear -p 2222 -r /data/ssh/dropbear_rsa_host_key -F -E
+service ssh-manager /vendor/bin/sh /vendor/bin/ssh-toggle.sh start
     class late_start
     user root
     group root
     disabled
     oneshot
+
+# ZRAM для маломощных версий
+on property:sys.boot_completed=1
+    write /sys/block/zram0/comp_algorithm lz4
+    write /sys/block/zram0/disk_size 1073741824
+    exec u:r:system_server:s0 -- /system/bin/sh -c "mkswap /dev/block/zram0 && swapon /dev/block/zram0"

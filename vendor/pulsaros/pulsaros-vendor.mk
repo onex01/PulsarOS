@@ -1,36 +1,42 @@
-# =============================================================================
-# PulsarOS — Vendor overlay makefile
-# Подключает prebuilt APK, конфиги и скрипты
-# =============================================================================
+# Copyright (C) 2026 PulsarOS Project
+# SPDX-License-Identifier: MIT
 
 LOCAL_PATH := vendor/pulsaros
 
-# ── Prebuilt APK ──────────────────────────────────────────────────────────────
-# RetroArch — универсальный эмулятор
-PRODUCT_PACKAGES += RetroArch
+# ── Prebuilt APKs (для тех, кто не хочет submodule) ─────────────────
+# Раскомментируйте при необходимости:
+# PRODUCT_PACKAGES += \
+#     RetroArch-prebuilt \
+#     EmulationStationDE-prebuilt \
+#     Kodi-prebuilt
+#
+# include $(CLEAR_VARS)
+# LOCAL_MODULE := RetroArch-prebuilt
+# LOCAL_SRC_FILES := prebuilt/apk/RetroArch.apk
+# LOCAL_MODULE_CLASS := APPS
+# LOCAL_MODULE_SUFFIX := $(COMMON_ANDROID_PACKAGE_SUFFIX)
+# LOCAL_CERTIFICATE := PRESIGNED
+# include $(BUILD_PREBUILT)
 
-# EmulationStation DE — фронтенд для игровой библиотеки
-PRODUCT_PACKAGES += EmulationStationDE
+# ── Dropbear для SSH ─────────────────────────────────────────────────
+PRODUCT_PACKAGES += dropbear dropbearkey
 
-# Kodi — медиаплеер
-PRODUCT_PACKAGES += Kodi
+# ── Vendor properties ────────────────────────────────────────────────
+PRODUCT_VENDOR_PROPERTIES += \
+    persist.vendor.pulsaros.sku=zero3
 
-# ── Конфиги RetroArch ─────────────────────────────────────────────────────────
+# ── RetroArch cores whitelist (24 stable cores for H618) ─────────────────────
 PRODUCT_COPY_FILES += \
-    vendor/pulsaros/config/retroarch/retroarch.cfg:data/media/0/Android/data/com.retroarch/files/retroarch.cfg \
-    vendor/pulsaros/config/retroarch/autoconfig/pulsaros_gamepad.cfg:data/media/0/Android/data/com.retroarch/files/autoconfig/pulsaros_gamepad.cfg
+    vendor/pulsaros/config/retroarch/cores-whitelist.txt:$(TARGET_COPY_OUT_VENDOR)/etc/retroarch/cores-whitelist.txt \
+    vendor/pulsaros/config/retroarch/retroarch.cfg:$(TARGET_COPY_OUT_VENDOR)/etc/retroarch/retroarch.cfg
 
-# ── Конфиги ES-DE ─────────────────────────────────────────────────────────────
+# ── EmulationStation-DE systems config ───────────────────────────────────────
 PRODUCT_COPY_FILES += \
-    vendor/pulsaros/config/esde/es_systems.xml:data/media/0/ES-DE/custom_systems/es_systems.xml \
-    vendor/pulsaros/config/esde/es_settings.xml:data/media/0/ES-DE/settings/es_settings.xml
+    vendor/pulsaros/config/esde/es_systems.xml:$(TARGET_COPY_OUT_VENDOR)/etc/esde/es_systems.xml \
+    vendor/pulsaros/config/esde/es_settings.xml:$(TARGET_COPY_OUT_VENDOR)/etc/esde/es_settings.xml
 
-# ── Системные скрипты ─────────────────────────────────────────────────────────
-PRODUCT_COPY_FILES += \
-    vendor/pulsaros/scripts/storage-watcher.sh:system/bin/pulsaros-storage-watcher \
-    vendor/pulsaros/scripts/ssh-toggle.sh:system/bin/pulsaros-ssh-toggle \
-    vendor/pulsaros/scripts/set-resolution.sh:system/bin/pulsaros-set-resolution
-
-# ── Init скрипты (запуск при загрузке) ───────────────────────────────────────
-PRODUCT_COPY_FILES += \
-    vendor/pulsaros/scripts/init.pulsaros.rc:system/etc/init/init.pulsaros.rc
+# ── Prebuilt libretro cores (если будут в prebuilt/cores/) ───────────────────
+# PRODUCT_COPY_FILES += \
+#     vendor/pulsaros/prebuilt/cores/nestopia_libretro.so:$(TARGET_COPY_OUT_VENDOR)/lib/libretro/nestopia_libretro.so \
+#     vendor/pulsaros/prebuilt/cores/snes9x_libretro.so:$(TARGET_COPY_OUT_VENDOR)/lib/libretro/snes9x_libretro.so \
+#     ... # добавить остальные 22 ядра по необходимости

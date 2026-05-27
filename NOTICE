@@ -1,0 +1,39 @@
+PulsarOS Composite Project Notice
+=================================
+
+PulsarOS is a composite project. Original code is MIT, third-party code
+retains its original licenses.
+
+1. PULSAROS ORIGINAL CODE
+   License: MIT | Copyright: © 2026 Илья (onex01)
+   Paths: device/, vendor/pulsaros/, packages/apps/PulsarSetup/, scripts/, docs/
+
+2. ANDROID OPEN SOURCE PROJECT (AOSP)
+   License: Apache 2.0 | Copyright: The Android Open Source Project
+   "This product includes software developed by the Android Open Source Project."
+
+3. ORANGE PI BSP (Allwinner H618)
+   License: Mixed (Apache 2.0 + GPL-2.0 kernel + Proprietary blobs)
+   Source: http://www.orangepi.org/
+
+4. LINUX KERNEL
+   License: GPL-2.0 only | Source: https://www.kernel.org/
+   Source for modifications: see docs/SOURCES.md
+
+5. RETROARCH
+   License: GPL-3.0 | Source: https://github.com/libretro/RetroArch
+
+6. EMULATIONSTATION-DE
+   License: GPL-3.0 | Source: https://github.com/EmulationStation/EmulationStation-DE
+
+7. KODI
+   License: GPL-2.0+ | Source: https://github.com/xbmc/xbmc
+
+8. CONSOLE LAUNCHER (fork)
+   License: MIT | Source: https://github.com/likeich/console-launcher
+
+9. TV BRO (fork)
+   License: MIT | Source: https://github.com/truefedex/tv-bro
+
+For full license strategy: docs/LICENSE-STRATEGY.md
+For source code locations: docs/SOURCES.md

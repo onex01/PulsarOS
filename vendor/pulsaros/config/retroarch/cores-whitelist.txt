@@ -1,0 +1,39 @@
+# PulsarOS Core Whitelist — Top 24 for Allwinner H618 (Cortex-A53 × 4)
+# Отбор: стабильность + производительность на Mali G31
+# Формат: имя_ядра_без_суффикса (для Android APK: libretro_имя.so)
+
+# ── Nintendo (8) ────────────────────────────────────────────────────────────
+nestopia
+snes9x
+mgba
+gambatte
+sameboy
+melonds
+mupen64plus_next
+mednafen_pce_fast
+
+# ── Sega (5) ─────────────────────────────────────────────────────────────────
+genesis_plus_gx
+picodrive
+smsplus
+gearcoleco
+yabasanshiro
+
+# ── Sony (2) ─────────────────────────────────────────────────────────────────
+pcsx_rearmed
+ppsspp
+
+# ── Arcade / Neo Geo (3) ─────────────────────────────────────────────────────
+fbneo
+mame2003_plus
+neocd
+
+# ── Atari / 8-bit (4) ────────────────────────────────────────────────────────
+stella
+handy
+prosystem
+atari800
+
+# ── Engines / Other (2) ──────────────────────────────────────────────────────
+scummvm
+prboom

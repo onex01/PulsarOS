@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.PulsarSetup" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/pulsar_accent</item>
+        <item name="colorPrimaryVariant">@color/pulsar_accent</item>
+        <item name="android:windowBackground">@color/pulsar_bg</item>
+    </style>
+    <style name="Theme.PulsarSetup.NoActionBar" parent="Theme.PulsarSetup">
+        <item name="windowNoTitle">true</item>
+        <item name="windowActionBar">false</item>
+    </style>
+    <style name="Theme.PulsarSetup.Dialog" parent="Theme.MaterialComponents.Dialog.Alert">
+        <item name="colorPrimary">@color/pulsar_accent</item>
+    </style>
+</resources>

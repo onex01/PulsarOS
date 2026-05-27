@@ -1,0 +1,37 @@
+name: Build Debug
+on:
+  push:
+    branches: [main, dev]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: [self-hosted, linux, android-build]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup environment
+        run: ./scripts/setup-env.sh
+
+      - name: Restore ccache
+        uses: actions/cache@v4
+        with:
+          path: ~/.ccache
+          key: ccache-${{ runner.os }}-${{ hashFiles('**/*.mk') }}
+          restore-keys: ccache-${{ runner.os }}-
+
+      - name: Build (debug)
+        env:
+          PULSAROS_BUILD_NUMBER: ${{ github.run_number }}
+        run: ./scripts/build.sh build userdebug
+
+      - name: Check licenses
+        run: ./scripts/check-licenses.sh
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: pulsaros-debug-${{ github.run_number }}
+          path: ${{ env.ANDROID_SRC }}/out/target/product/zero3/*.img

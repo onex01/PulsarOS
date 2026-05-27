@@ -1,1 +1,50 @@
-.history
+# Build outputs
+out/
+out-*/
+**/build/
+**/bin/
+**/gen/
+*.apk
+*.img
+*.zip
+
+# IDE
+.idea/
+*.iml
+.vscode/
+*.swp
+*~
+.project
+.classpath
+.settings/
+
+# OS
+.DS_Store
+Thumbs.db
+.directory
+
+# Logs & temp
+*.log
+logs/
+*.tmp
+.cache/
+
+# Local config (НЕ коммитить персональные пути)
+local.conf
+build.env
+.userconfig
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+
+# ccache
+.ccache/
+
+# Keystore
+*.keystore
+*.jks
+
+# Code history
+.history/

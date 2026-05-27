@@ -1,150 +1,235 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!-- ==========================================================================
-     PulsarOS — ES-DE systems config
-     Пути настроены под PulsarOS storage layout:
-     /storage/<UUID>/PulsarOS/roms/<система>/
-     =========================================================================
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     PulsarOS EmulationStation-DE Systems Config
+     SPDX-License-Identifier: MIT
+     Paths: Android external storage → /storage/UUID/PulsarOS/roms/
 -->
 <systemList>
+  <!-- Nintendo -->
+  <system>
+    <name>nes</name>
+    <fullname>Nintendo Entertainment System</fullname>
+    <path>/storage/PulsarOS/roms/nes</path>
+    <extension>.nes .fds .zip .NES .FDS .ZIP</extension>
+    <command>am start -n com.retroarch/.browser.retroactivity.RetroActivityFuture -e ROM %ROM% -e LIBRETRO /vendor/lib/libretro/nestopia_libretro.so -e CONFIGFILE /vendor/etc/retroarch/retroarch.cfg</command>
+    <platform>nes</platform>
+    <theme>nes</theme>
+  </system>
+  <system>
+    <name>snes</name>
+    <fullname>Super Nintendo Entertainment System</fullname>
+    <path>/storage/PulsarOS/roms/snes</path>
+    <extension>.sfc .smc .zip .SFC .SMC .ZIP</extension>
+    <command>am start -n com.retroarch/.browser.retroactivity.RetroActivityFuture -e ROM %ROM% -e LIBRETRO /vendor/lib/libretro/snes9x_libretro.so</command>
+    <platform>snes</platform>
+    <theme>snes</theme>
+  </system>
+  <system>
+    <name>gba</name>
+    <fullname>Game Boy Advance</fullname>
+    <path>/storage/PulsarOS/roms/gba</path>
+    <extension>.gba .zip .GBA .ZIP</extension>
+    <command>am start -n com.retroarch/.browser.retroactivity.RetroActivityFuture -e ROM %ROM% -e LIBRETRO /vendor/lib/libretro/mgba_libretro.so</command>
+    <platform>gba</platform>
+    <theme>gba</theme>
+  </system>
+  <system>
+    <name>gbc</name>
+    <fullname>Game Boy Color</fullname>
+    <path>/storage/PulsarOS/roms/gbc</path>
+    <extension>.gbc .zip .GBC .ZIP</extension>
+    <command>am start -n com.retroarch/.browser.retroactivity.RetroActivityFuture -e ROM %ROM% -e LIBRETRO /vendor/lib/libretro/gambatte_libretro.so</command>
+    <platform>gbc</platform>
+    <theme>gbc</theme>
+  </system>
+  <system>
+    <name>gb</name>
+    <fullname>Game Boy</fullname>
+    <path>/storage/PulsarOS/roms/gb</path>
+    <extension>.gb .zip .GB .ZIP</extension>
+    <command>am start -n com.retroarch/.browser.retroactivity.RetroActivityFuture -e ROM %ROM% -e LIBRETRO /vendor/lib/libretro/sameboy_libretro.so</command>
+    <platform>gb</platform>
+    <theme>gb</theme>
+  </system>
+  <system>
+    <name>nds</name>
+    <fullname>Nintendo DS</fullname>
+    <path>/storage/PulsarOS/roms/nds</path>
+    <extension>.nds .zip .NDS .ZIP</extension>
+    <command>am start -n com.retroarch/.browser.retroactivity.RetroActivityFuture -e ROM %ROM% -e LIBRETRO /vendor/lib/libretro/melonds_libretro.so</command>
+    <platform>nds</platform>
+    <theme>nds</theme>
+  </system>
+  <system>
+    <name>n64</name>
+    <fullname>Nintendo 64</fullname>
+    <path>/storage/PulsarOS/roms/n64</path>
+    <extension>.z64 .n64 .v64 .zip .Z64 .N64 .V64 .ZIP</extension>
+    <command>am start -n com.retroarch/.browser.retroactivity.RetroActivityFuture -e ROM %ROM% -e LIBRETRO /vendor/lib/libretro/mupen64plus_next_libretro.so</command>
+    <platform>n64</platform>
+    <theme>n64</theme>
+  </system>
+  <system>
+    <name>pce</name>
+    <fullname>PC Engine / TurboGrafx-16</fullname>
+    <path>/storage/PulsarOS/roms/pce</path>
+    <extension>.pce .cue .zip .PCE .CUE .ZIP</extension>
+    <command>am start -n com.retroarch/.browser.retroactivity.RetroActivityFuture -e ROM %ROM% -e LIBRETRO /vendor/lib/libretro/mednafen_pce_fast_libretro.so</command>
+    <platform>pce</platform>
+    <theme>pce</theme>
+  </system>
 
-    <!-- NES -->
-    <system>
-        <name>nes</name>
-        <fullname>Nintendo Entertainment System</fullname>
-        <path>%ROMPATH%/nes</path>
-        <extension>.nes .NES .zip .ZIP .7z .7Z</extension>
-        <command label="RetroArch (fceumm)">
-            am start --user 0 -n com.retroarch/.browser.retroactivity.RetroActivityFuture
-            -e ROM %ROM% -e LIBRETRO /data/data/com.retroarch/cores/fceumm_libretro_android.so
-        </command>
-        <platform>nes</platform>
-        <theme>nes</theme>
-    </system>
+  <!-- Sega -->
+  <system>
+    <name>megadrive</name>
+    <fullname>Sega Mega Drive / Genesis</fullname>
+    <path>/storage/PulsarOS/roms/megadrive</path>
+    <extension>.md .gen .bin .zip .MD .GEN .BIN .ZIP</extension>
+    <command>am start -n com.retroarch/.browser.retroactivity.RetroActivityFuture -e ROM %ROM% -e LIBRETRO /vendor/lib/libretro/genesis_plus_gx_libretro.so</command>
+    <platform>megadrive</platform>
+    <theme>megadrive</theme>
+  </system>
+  <system>
+    <name>mastersystem</name>
+    <fullname>Sega Master System</fullname>
+    <path>/storage/PulsarOS/roms/mastersystem</path>
+    <extension>.sms .bin .zip .SMS .BIN .ZIP</extension>
+    <command>am start -n com.retroarch/.browser.retroactivity.RetroActivityFuture -e ROM %ROM% -e LIBRETRO /vendor/lib/libretro/smsplus_libretro.so</command>
+    <platform>mastersystem</platform>
+    <theme>mastersystem</theme>
+  </system>
+  <system>
+    <name>gamegear</name>
+    <fullname>Sega Game Gear</fullname>
+    <path>/storage/PulsarOS/roms/gamegear</path>
+    <extension>.gg .bin .zip .GG .BIN .ZIP</extension>
+    <command>am start -n com.retroarch/.browser.retroactivity.RetroActivityFuture -e ROM %ROM% -e LIBRETRO /vendor/lib/libretro/smsplus_libretro.so</command>
+    <platform>gamegear</platform>
+    <theme>gamegear</theme>
+  </system>
+  <system>
+    <name>segacd</name>
+    <fullname>Sega CD / Mega CD</fullname>
+    <path>/storage/PulsarOS/roms/segacd</path>
+    <extension>.cue .iso .chd .CUE .ISO .CHD</extension>
+    <command>am start -n com.retroarch/.browser.retroactivity.RetroActivityFuture -e ROM %ROM% -e LIBRETRO /vendor/lib/libretro/picodrive_libretro.so</command>
+    <platform>segacd</platform>
+    <theme>segacd</theme>
+  </system>
+  <system>
+    <name>sega32x</name>
+    <fullname>Sega 32X</fullname>
+    <path>/storage/PulsarOS/roms/sega32x</path>
+    <extension>.32x .smd .bin .zip .32X .SMD .BIN .ZIP</extension>
+    <command>am start -n com.retroarch/.browser.retroactivity.RetroActivityFuture -e ROM %ROM% -e LIBRETRO /vendor/lib/libretro/picodrive_libretro.so</command>
+    <platform>sega32x</platform>
+    <theme>sega32x</theme>
+  </system>
 
-    <!-- SNES -->
-    <system>
-        <name>snes</name>
-        <fullname>Super Nintendo Entertainment System</fullname>
-        <path>%ROMPATH%/snes</path>
-        <extension>.sfc .SFC .smc .SMC .zip .ZIP .7z .7Z</extension>
-        <command label="RetroArch (snes9x)">
-            am start --user 0 -n com.retroarch/.browser.retroactivity.RetroActivityFuture
-            -e ROM %ROM% -e LIBRETRO /data/data/com.retroarch/cores/snes9x_libretro_android.so
-        </command>
-        <platform>snes</platform>
-        <theme>snes</theme>
-    </system>
+  <!-- Sony -->
+  <system>
+    <name>psx</name>
+    <fullname>Sony PlayStation</fullname>
+    <path>/storage/PulsarOS/roms/psx</path>
+    <extension>.bin .cue .img .iso .pbp .chd .BIN .CUE .IMG .ISO .PBP .CHD</extension>
+    <command>am start -n com.retroarch/.browser.retroactivity.RetroActivityFuture -e ROM %ROM% -e LIBRETRO /vendor/lib/libretro/pcsx_rearmed_libretro.so</command>
+    <platform>psx</platform>
+    <theme>psx</theme>
+  </system>
+  <system>
+    <name>psp</name>
+    <fullname>Sony PlayStation Portable</fullname>
+    <path>/storage/PulsarOS/roms/psp</path>
+    <extension>.iso .cso .pbp .chd .ISO .CSO .PBP .CHD</extension>
+    <command>am start -n com.retroarch/.browser.retroactivity.RetroActivityFuture -e ROM %ROM% -e LIBRETRO /vendor/lib/libretro/ppsspp_libretro.so</command>
+    <platform>psp</platform>
+    <theme>psp</theme>
+  </system>
 
-    <!-- Mega Drive / Genesis -->
-    <system>
-        <name>megadrive</name>
-        <fullname>Sega Mega Drive / Genesis</fullname>
-        <path>%ROMPATH%/md</path>
-        <extension>.md .MD .bin .BIN .smd .SMD .gen .GEN .zip .ZIP .7z .7Z</extension>
-        <command label="RetroArch (Genesis Plus GX)">
-            am start --user 0 -n com.retroarch/.browser.retroactivity.RetroActivityFuture
-            -e ROM %ROM% -e LIBRETRO /data/data/com.retroarch/cores/genesis_plus_gx_libretro_android.so
-        </command>
-        <platform>megadrive</platform>
-        <theme>megadrive</theme>
-    </system>
+  <!-- Arcade -->
+  <system>
+    <name>arcade</name>
+    <fullname>Arcade (FBNeo)</fullname>
+    <path>/storage/PulsarOS/roms/arcade</path>
+    <extension>.zip .ZIP</extension>
+    <command>am start -n com.retroarch/.browser.retroactivity.RetroActivityFuture -e ROM %ROM% -e LIBRETRO /vendor/lib/libretro/fbneo_libretro.so</command>
+    <platform>arcade</platform>
+    <theme>arcade</theme>
+  </system>
+  <system>
+    <name>mame</name>
+    <fullname>Arcade (MAME 2003+)</fullname>
+    <path>/storage/PulsarOS/roms/mame</path>
+    <extension>.zip .ZIP</extension>
+    <command>am start -n com.retroarch/.browser.retroactivity.RetroActivityFuture -e ROM %ROM% -e LIBRETRO /vendor/lib/libretro/mame2003_plus_libretro.so</command>
+    <platform>arcade</platform>
+    <theme>mame</theme>
+  </system>
+  <system>
+    <name>neogeo</name>
+    <fullname>Neo Geo</fullname>
+    <path>/storage/PulsarOS/roms/neogeo</path>
+    <extension>.zip .ZIP</extension>
+    <command>am start -n com.retroarch/.browser.retroactivity.RetroActivityFuture -e ROM %ROM% -e LIBRETRO /vendor/lib/libretro/neocd_libretro.so</command>
+    <platform>neogeo</platform>
+    <theme>neogeo</theme>
+  </system>
 
-    <!-- Game Boy Advance -->
-    <system>
-        <name>gba</name>
-        <fullname>Nintendo Game Boy Advance</fullname>
-        <path>%ROMPATH%/gba</path>
-        <extension>.gba .GBA .zip .ZIP .7z .7Z</extension>
-        <command label="RetroArch (mGBA)">
-            am start --user 0 -n com.retroarch/.browser.retroactivity.RetroActivityFuture
-            -e ROM %ROM% -e LIBRETRO /data/data/com.retroarch/cores/mgba_libretro_android.so
-        </command>
-        <platform>gba</platform>
-        <theme>gba</theme>
-    </system>
+  <!-- Atari / 8-bit -->
+  <system>
+    <name>atari2600</name>
+    <fullname>Atari 2600</fullname>
+    <path>/storage/PulsarOS/roms/atari2600</path>
+    <extension>.bin .zip .BIN .ZIP</extension>
+    <command>am start -n com.retroarch/.browser.retroactivity.RetroActivityFuture -e ROM %ROM% -e LIBRETRO /vendor/lib/libretro/stella_libretro.so</command>
+    <platform>atari2600</platform>
+    <theme>atari2600</theme>
+  </system>
+  <system>
+    <name>lynx</name>
+    <fullname>Atari Lynx</fullname>
+    <path>/storage/PulsarOS/roms/lynx</path>
+    <extension>.lnx .zip .LNX .ZIP</extension>
+    <command>am start -n com.retroarch/.browser.retroactivity.RetroActivityFuture -e ROM %ROM% -e LIBRETRO /vendor/lib/libretro/handy_libretro.so</command>
+    <platform>lynx</platform>
+    <theme>lynx</theme>
+  </system>
+  <system>
+    <name>atari7800</name>
+    <fullname>Atari 7800</fullname>
+    <path>/storage/PulsarOS/roms/atari7800</path>
+    <extension>.a78 .bin .zip .A78 .BIN .ZIP</extension>
+    <command>am start -n com.retroarch/.browser.retroactivity.RetroActivityFuture -e ROM %ROM% -e LIBRETRO /vendor/lib/libretro/prosystem_libretro.so</command>
+    <platform>atari7800</platform>
+    <theme>atari7800</theme>
+  </system>
+  <system>
+    <name>atari800</name>
+    <fullname>Atari 8-bit Computers</fullname>
+    <path>/storage/PulsarOS/roms/atari800</path>
+    <extension>.atr .xex .zip .ATR .XEX .ZIP</extension>
+    <command>am start -n com.retroarch/.browser.retroactivity.RetroActivityFuture -e ROM %ROM% -e LIBRETRO /vendor/lib/libretro/atari800_libretro.so</command>
+    <platform>atari800</platform>
+    <theme>atari800</theme>
+  </system>
 
-    <!-- PlayStation -->
-    <system>
-        <name>psx</name>
-        <fullname>Sony PlayStation</fullname>
-        <path>%ROMPATH%/psx</path>
-        <extension>.bin .BIN .cue .CUE .img .IMG .pbp .PBP .chd .CHD .zip .ZIP</extension>
-        <command label="RetroArch (PCSX ReARMed)">
-            am start --user 0 -n com.retroarch/.browser.retroactivity.RetroActivityFuture
-            -e ROM %ROM% -e LIBRETRO /data/data/com.retroarch/cores/pcsx_rearmed_libretro_android.so
-        </command>
-        <platform>psx</platform>
-        <theme>psx</theme>
-    </system>
-
-    <!-- Nintendo DS -->
-    <system>
-        <name>nds</name>
-        <fullname>Nintendo DS</fullname>
-        <path>%ROMPATH%/nds</path>
-        <extension>.nds .NDS .zip .ZIP .7z .7Z</extension>
-        <command label="RetroArch (DeSmuME)">
-            am start --user 0 -n com.retroarch/.browser.retroactivity.RetroActivityFuture
-            -e ROM %ROM% -e LIBRETRO /data/data/com.retroarch/cores/desmume_libretro_android.so
-        </command>
-        <platform>nds</platform>
-        <theme>nds</theme>
-    </system>
-
-    <!-- Game Boy Color -->
-    <system>
-        <name>gbc</name>
-        <fullname>Nintendo Game Boy Color</fullname>
-        <path>%ROMPATH%/gbc</path>
-        <extension>.gbc .GBC .gb .GB .zip .ZIP .7z .7Z</extension>
-        <command label="RetroArch (Gambatte)">
-            am start --user 0 -n com.retroarch/.browser.retroactivity.RetroActivityFuture
-            -e ROM %ROM% -e LIBRETRO /data/data/com.retroarch/cores/gambatte_libretro_android.so
-        </command>
-        <platform>gbc</platform>
-        <theme>gbc</theme>
-    </system>
-
-    <!-- Arcade (MAME 2003+) -->
-    <system>
-        <name>arcade</name>
-        <fullname>Arcade (MAME)</fullname>
-        <path>%ROMPATH%/arcade</path>
-        <extension>.zip .ZIP .7z .7Z</extension>
-        <command label="RetroArch (MAME 2003+)">
-            am start --user 0 -n com.retroarch/.browser.retroactivity.RetroActivityFuture
-            -e ROM %ROM% -e LIBRETRO /data/data/com.retroarch/cores/mame2003_plus_libretro_android.so
-        </command>
-        <platform>arcade</platform>
-        <theme>arcade</theme>
-    </system>
-
-    <!-- PC Engine -->
-    <system>
-        <name>pcengine</name>
-        <fullname>NEC PC Engine / TurboGrafx-16</fullname>
-        <path>%ROMPATH%/pce</path>
-        <extension>.pce .PCE .ccd .CCD .chd .CHD .zip .ZIP</extension>
-        <command label="RetroArch (Mednafen PCE Fast)">
-            am start --user 0 -n com.retroarch/.browser.retroactivity.RetroActivityFuture
-            -e ROM %ROM% -e LIBRETRO /data/data/com.retroarch/cores/mednafen_pce_fast_libretro_android.so
-        </command>
-        <platform>pcengine</platform>
-        <theme>pcengine</theme>
-    </system>
-
-    <!-- Nintendo 64 -->
-    <system>
-        <name>n64</name>
-        <fullname>Nintendo 64</fullname>
-        <path>%ROMPATH%/n64</path>
-        <extension>.z64 .Z64 .n64 .N64 .v64 .V64 .zip .ZIP .7z .7Z</extension>
-        <command label="RetroArch (Mupen64Plus-Next)">
-            am start --user 0 -n com.retroarch/.browser.retroactivity.RetroActivityFuture
-            -e ROM %ROM% -e LIBRETRO /data/data/com.retroarch/cores/mupen64plus_next_libretro_android.so
-        </command>
-        <platform>n64</platform>
-        <theme>n64</theme>
-    </system>
-
+  <!-- Engines -->
+  <system>
+    <name>scummvm</name>
+    <fullname>ScummVM Adventure Games</fullname>
+    <path>/storage/PulsarOS/roms/scummvm</path>
+    <extension>.sh .SH</extension>
+    <command>am start -n com.retroarch/.browser.retroactivity.RetroActivityFuture -e ROM %ROM% -e LIBRETRO /vendor/lib/libretro/scummvm_libretro.so</command>
+    <platform>pc</platform>
+    <theme>scummvm</theme>
+  </system>
+  <system>
+    <name>doom</name>
+    <fullname>Doom / PrBoom</fullname>
+    <path>/storage/PulsarOS/roms/doom</path>
+    <extension>.wad .iwad .pk3 .WAD .IWAD .PK3</extension>
+    <command>am start -n com.retroarch/.browser.retroactivity.RetroActivityFuture -e ROM %ROM% -e LIBRETRO /vendor/lib/libretro/prboom_libretro.so</command>
+    <platform>pc</platform>
+    <theme>doom</theme>
+  </system>
 </systemList>

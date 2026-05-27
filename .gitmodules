@@ -1,0 +1,20 @@
+[submodule "packages/apps/ConsoleLauncher"]
+    path = packages/apps/ConsoleLauncher
+    url = https://github.com/likeich/console-launcher.git
+    branch = master
+[submodule "packages/apps/TVBro"]
+    path = packages/apps/TVBro
+    url = https://github.com/truefedex/tv-bro.git
+    branch = main
+[submodule "packages/apps/RetroArch"]
+    path = packages/apps/RetroArch
+    url = https://github.com/libretro/RetroArch.git
+    branch = master
+[submodule "packages/apps/EmulationStationDE"]
+    path = packages/apps/EmulationStationDE
+    url = https://github.com/EmulationStation/EmulationStation-DE.git
+    branch = main
+[submodule "packages/apps/Kodi"]
+    path = packages/apps/Kodi
+    url = https://github.com/xbmc/xbmc.git
+    branch = master

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">PulsarOS Setup</string>
+    <string name="step_welcome">Добро пожаловать в PulsarOS</string>
+    <string name="step_welcome_desc">Система превратит Orange Pi Zero 3 в ретро-консоль.\nНажмите \"Далее\" для начала настройки.</string>
+    <string name="step_gamepad">Подключение геймпада</string>
+    <string name="step_gamepad_desc">Подключите геймпад по USB или Bluetooth.\nAndroid автоматически определит большинство устройств.</string>
+    <string name="step_network">Настройка сети</string>
+    <string name="step_network_desc">Настройте Wi-Fi или используйте Ethernet.\nСеть нужна для загрузки тем и обновлений.</string>
+    <string name="step_done">Готово!</string>
+    <string name="step_done_desc">Запуск консоли…\nПриятной игры!</string>
+    <string name="btn_skip">Пропустить</string>
+    <string name="btn_next">Далее</string>
+</resources>

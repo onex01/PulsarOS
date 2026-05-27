@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Disable TV Input Framework for gaming console -->
+<config>
+    <component-override package="com.android.tv">
+        <component class=".tvinput.TvInputManagerService" enabled="false"/>
+    </component-override>
+</config>
