@@ -29,7 +29,8 @@ VARIANT="${2:-userdebug}"
 # ── Sync overlays ─────────────────────────────────────────────────────────────
 sync_overlays() {
     info "Syncing PulsarOS overlays to ${ANDROID_SRC}"
-    for dir in device vendor packages; do
+
+    for dir in device vendor; do
         src="${REPO_DIR}/${dir}"
         dst="${ANDROID_SRC}/${dir}"
         if [[ -d "$src" ]]; then
@@ -39,6 +40,25 @@ sync_overlays() {
             warn "  ${dir}/ not found in repo, skipping"
         fi
     done
+
+    src="${REPO_DIR}/packages"
+    dst="${ANDROID_SRC}/packages"
+    if [[ -d "$src" ]]; then
+        found=false
+        for sub in "$src"/*; do
+            [[ -d "$sub" ]] || continue
+            found=true
+            subname=$(basename "$sub")
+            mkdir -p "${dst}/${subname}"
+            rsync -a --delete "${sub}/" "${dst}/${subname}/"
+            ok "  packages/${subname}/ synced"
+        done
+        if [[ "$found" = false ]]; then
+            warn "  packages/ directory is empty, nothing to sync"
+        fi
+    else
+        warn "  packages/ not found in repo, skipping"
+    fi
 }
 
 # ── Build ─────────────────────────────────────────────────────────────────────
@@ -50,6 +70,10 @@ do_build() {
     # Validate Android source tree
     [[ -f "build/envsetup.sh" ]] \
         || die "Android source not found at ${ANDROID_SRC}. Set ANDROID_SRC env var."
+
+    if [[ ! -f "packages/modules/common/Android.bp" ]]; then
+        die "Android source appears incomplete: missing packages/modules/common/Android.bp."
+    fi
 
     # shellcheck disable=SC1091
     source build/envsetup.sh

@@ -10,16 +10,21 @@ android_app {
     certificate: "platform",
     privileged: true,
     product_specific: false,
+
     optimize: {
         enabled: true,
     },
-    static_libs: [
+
+    // Kotlin в Android 12: просто добавляем kotlin-stdlib в libs
+    libs: [
         "androidx.core_core-ktx",
         "androidx.appcompat_appcompat",
         "com.google.android.material_material",
         "androidx.constraintlayout_constraintlayout",
+        "kotlin-stdlib",
     ],
-    kotlin: {
-        common_srcs: [],
-    },
+
+    // Java 11 совместимость
+    javacflags: ["-source", "11", "-target", "11"],
+    kotlincflags: ["-jvm-target", "11"],
 }
