@@ -1,8 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">PulsarOS Setup</string>
-    <string name="step_welcome">Добро пожаловать в PulsarOS</string>
-    <string name="step_welcome_desc">Система превратит Orange Pi Zero 3 в ретро-консоль.\nНажмите "Далее" для начала настройки.</string>
+    <string name="step_language">Выбор языка</string>
+    <string name="step_language_desc">Выберите язык интерфейса для начальной настройки PulsarOS.</string>
+    <string name="step_license">Лицензионное соглашение</string>
+    <string name="step_license_desc">Примите лицензии предустановленных приложений, чтобы продолжить.</string>
     <string name="step_gamepad">Подключение геймпада</string>
     <string name="step_gamepad_desc">Подключите геймпад по USB или Bluetooth.\nНажмите "Проверить" и нажмите кнопку на контроллере.</string>
     <string name="step_network">Настройка сети</string>
@@ -42,6 +44,14 @@
     <string name="status_storage_roms">ROMs найдены</string>
     <string name="status_storage_no_roms">ROMs не найдены</string>
     <string name="status_ready">Готово к запуску.</string>
+    <string name="status_language_selected">Выбран язык: %1$s</string>
+    <string name="status_license_accepted">Лицензии приняты.</string>
+    <string name="status_license_pending">Лицензии не приняты.</string>
+    <string name="btn_previous">Назад</string>
+    <string name="btn_action_show_license">Показать лицензии</string>
+    <string name="btn_action_open_bt">Открыть Bluetooth</string>
+    <string name="btn_action_open_network">Открыть Wi-Fi</string>
+    <string name="toast_language_set">Язык установлен: %1$s</string>
     <string name="toast_connect_gamepad">Проверьте подключение геймпада и нажмите кнопку на контроллере.</string>
     <string name="toast_display_set_max">Установлена максимальная частота: %1$.1f Hz.</string>
     <string name="toast_display_already_max">Максимальная частота уже активна.</string>

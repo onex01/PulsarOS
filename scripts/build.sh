@@ -7,9 +7,13 @@ set -eo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PULSAR_VERSION="$(cat "${SCRIPT_DIR}/../VERSION" 2>/dev/null || echo "0.1.0-dev")"
 REPO_DIR="${SCRIPT_DIR}/.."
-ANDROID_SRC="${ANDROID_SRC:-/mnt/OHDD/H618-Android12-Src}"   # override via env
-PRODUCT="pulsaros_zero3"
+ANDROID_SRC="${ANDROID_SRC:-/mnt/LinuxFile/H618-Android12-Src}"   # override via env
+PRODUCT="pulsaros_zero3"         # Product name (must match device/softwinner/zero3/pulsaros_zero3.mk)
 JOBS="${JOBS:-$(nproc)}"
+
+# Validate that device tree exists in correct location
+[[ -d "${REPO_DIR}/device/softwinner/zero3" ]] \
+    || die "device/softwinner/zero3 not found in repo. Check repository structure."
 
 # ── Colors ───────────────────────────────────────────────────────────────────
 RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'
@@ -27,37 +31,47 @@ VARIANT="${2:-userdebug}"
     || die "Unknown variant '$VARIANT'. Use: user | userdebug | eng"
 
 # ── Sync overlays ─────────────────────────────────────────────────────────────
+# NOTE: We ONLY copy our additions, never delete Orange Pi source files.
+# This allows device/ and vendor/ to contain both Orange Pi BSP and our customizations.
 sync_overlays() {
     info "Syncing PulsarOS overlays to ${ANDROID_SRC}"
 
-    for dir in device vendor; do
-        src="${REPO_DIR}/${dir}"
-        dst="${ANDROID_SRC}/${dir}"
-        if [[ -d "$src" ]]; then
-            rsync -a --delete "${src}/" "${dst}/"
-            ok "  ${dir}/ synced"
-        else
-            warn "  ${dir}/ not found in repo, skipping"
-        fi
-    done
-
-    src="${REPO_DIR}/packages"
-    dst="${ANDROID_SRC}/packages"
+    # device/softwinner/zero3/ → device/softwinner/zero3/
+    src="${REPO_DIR}/device/softwinner/zero3"
+    dst="${ANDROID_SRC}/device/softwinner/zero3"
     if [[ -d "$src" ]]; then
-        found=false
+        mkdir -p "$dst"
+        rsync -av "${src}/" "${dst}/" --exclude '.git' --exclude '.gitignore'
+        ok "  device/softwinner/zero3/ synced"
+    else
+        warn "  device/softwinner/zero3/ not found (is repo structure set up?)"
+    fi
+
+    # vendor/pulsaros/ → vendor/pulsaros/
+    src="${REPO_DIR}/vendor/pulsaros"
+    dst="${ANDROID_SRC}/vendor/pulsaros"
+    if [[ -d "$src" ]]; then
+        mkdir -p "$dst"
+        rsync -av "${src}/" "${dst}/" --exclude '.git' --exclude '.gitignore'
+        ok "  vendor/pulsaros/ synced"
+    else
+        warn "  vendor/pulsaros/ not found (is repo structure set up?)"
+    fi
+
+    # packages/apps/* → packages/apps/*
+    src="${REPO_DIR}/packages/apps"
+    dst="${ANDROID_SRC}/packages/apps"
+    if [[ -d "$src" ]]; then
+        mkdir -p "$dst"
         for sub in "$src"/*; do
             [[ -d "$sub" ]] || continue
-            found=true
             subname=$(basename "$sub")
             mkdir -p "${dst}/${subname}"
-            rsync -a --delete "${sub}/" "${dst}/${subname}/"
-            ok "  packages/${subname}/ synced"
+            rsync -av "${sub}/" "${dst}/${subname}/" --exclude '.git' --exclude '.gitignore'
+            ok "  packages/apps/${subname}/ synced"
         done
-        if [[ "$found" = false ]]; then
-            warn "  packages/ directory is empty, nothing to sync"
-        fi
     else
-        warn "  packages/ not found in repo, skipping"
+        warn "  packages/apps/ not found (is repo structure set up?)"
     fi
 }
 
@@ -82,7 +96,7 @@ do_build() {
     local LUNCH_TARGET="${PRODUCT}-${VARIANT}"
     info "Running: lunch ${LUNCH_TARGET}"
     lunch "${LUNCH_TARGET}" \
-        || die "lunch failed. Check device/orangepi/zero3/AndroidProducts.mk"
+        || die "lunch failed. Check device/softwinner/zero3/AndroidProducts.mk"
 
     # CCACHE
     if command -v ccache &>/dev/null; then
@@ -96,7 +110,6 @@ do_build() {
     # Export version info into the build
     export PULSAR_VERSION
     export PULSAR_BUILD_TYPE="${VARIANT}"
-    export BUILD_DATETIME="$(date -u +%s)"
     export BUILD_USERNAME="${USER}"
     export BUILD_HOSTNAME="$(hostname)"
 

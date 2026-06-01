@@ -1,6 +1,9 @@
+# Copyright (C) 2026 PulsarOS Project
+# SPDX-License-Identifier: MIT
+#
 # device.mk — hardware-specific config for Orange Pi Zero 3
 
-LOCAL_PATH := device/orangepi/zero3
+LOCAL_PATH := device/softwinner/zero3
 
 # ── Permissions / features ────────────────────────────────────────────────────
 PRODUCT_COPY_FILES += \
@@ -10,22 +13,22 @@ PRODUCT_COPY_FILES += \
     frameworks/native/data/etc/android.hardware.ethernet.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.ethernet.xml \
     frameworks/native/data/etc/android.software.midi.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.software.midi.xml
 
-# ── RRO overlays ─────────────────────────────────────────────────────────────
+# ── RRO overlays ──────────────────────────────────────────────────────────────
 PRODUCT_PACKAGE_OVERLAYS += \
-    device/orangepi/zero3/overlay
+    device/softwinner/zero3/overlay
 
-# ── FSTAB ────────────────────────────────────────────────────────────────────
+# ── FSTAB ─────────────────────────────────────────────────────────────────────
 PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/fstab.zero3:$(TARGET_COPY_OUT_RAMDISK)/fstab.zero3 \
     $(LOCAL_PATH)/fstab.zero3:$(TARGET_COPY_OUT_VENDOR)/etc/fstab.zero3
 
-# ── Init scripts ─────────────────────────────────────────────────────────────
+# ── Init scripts ───────────────────────────────────────────────────────────────
 PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/init.zero3.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/init.zero3.rc \
     $(LOCAL_PATH)/init.zero3.usb.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/init.zero3.usb.rc
 
-# ── Audio ─────────────────────────────────────────────────────────────────────
+# ── Audio ──────────────────────────────────────────────────────────────────────
 USE_XML_AUDIO_POLICY_CONF := 1
 
-# ── Display ───────────────────────────────────────────────────────────────────
+# ── Display ────────────────────────────────────────────────────────────────────
 TARGET_SCREEN_DENSITY := 213
