@@ -75,6 +75,28 @@ sync_overlays() {
     fi
 }
 
+# ── Android source patches ───────────────────────────────────────────────────
+apply_source_patches() {
+    local patches_dir="${REPO_DIR}/patches/android-source"
+    [[ -d "${patches_dir}" ]] || return 0
+
+    info "Applying Android source patches"
+
+    local patch_file
+    for patch_file in "${patches_dir}"/*.patch; do
+        [[ -e "${patch_file}" ]] || continue
+
+        if patch -d "${ANDROID_SRC}" -p1 --dry-run < "${patch_file}" >/dev/null; then
+            patch -d "${ANDROID_SRC}" -p1 < "${patch_file}"
+            ok "  $(basename "${patch_file}") applied"
+        elif patch -d "${ANDROID_SRC}" -p1 --reverse --dry-run < "${patch_file}" >/dev/null; then
+            ok "  $(basename "${patch_file}") already applied"
+        else
+            die "Could not apply patch: ${patch_file}"
+        fi
+    done
+}
+
 # ── Build ─────────────────────────────────────────────────────────────────────
 do_build() {
     info "Building PulsarOS v${PULSAR_VERSION} (${VARIANT})"
@@ -102,7 +124,13 @@ do_build() {
     if command -v ccache &>/dev/null; then
         export USE_CCACHE=1
         export CCACHE_EXEC="$(command -v ccache)"
-        ccache -M "${CCACHE_SIZE:-60G}"
+        export CCACHE_DIR="${ANDROID_SRC}/out/.ccache"
+        export CCACHE_TEMPDIR="${ANDROID_SRC}/out/.ccache/tmp"
+        mkdir -p "${CCACHE_DIR}" "${CCACHE_TEMPDIR}" || warn "Unable to create ccache directories"
+        if ! "${CCACHE_EXEC}" -M "${CCACHE_SIZE:-60G}"; then
+            warn "ccache initialization failed; disabling ccache"
+            unset USE_CCACHE
+        fi
     else
         warn "ccache not found — build will be slower"
     fi
@@ -144,10 +172,11 @@ do_clean() {
 
 # ── Main ─────────────────────────────────────────────────────────────────────
 sync_overlays
+apply_source_patches
 
 case "${ACTION}" in
     build) do_build ;;
     clean) do_clean ;;
-    sync)  ok "Overlays synced, no build requested." ;;
+    sync)  ok "Overlays and source patches synced, no build requested." ;;
     *)     die "Unknown action '${ACTION}'. Use: build | clean | sync" ;;
 esac

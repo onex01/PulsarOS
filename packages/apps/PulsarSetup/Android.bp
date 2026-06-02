@@ -26,5 +26,5 @@ android_app {
 
     // Java 11 совместимость
     javacflags: ["-source", "11", "-target", "11"],
-    kotlincflags: ["-jvm-target", "11"],
+    kotlincflags: ["-jvm-target=11"],
 }

@@ -1,0 +1,11 @@
+diff --git a/frameworks/av/media/libcedarc/demo/vencoderDemo/Android.bp b/frameworks/av/media/libcedarc/demo/vencoderDemo/Android.bp
+--- a/frameworks/av/media/libcedarc/demo/vencoderDemo/Android.bp
++++ b/frameworks/av/media/libcedarc/demo/vencoderDemo/Android.bp
+@@ -1,6 +1,7 @@
+ cc_binary {
+     name: "vencoderDemo",
+     defaults: ["libcdc_config_defaults"],
++    compile_multilib: "first",
+     vendor_available: true,
+     host_ldlibs: [
+         "-lm",

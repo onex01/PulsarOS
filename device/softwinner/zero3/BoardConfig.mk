@@ -40,10 +40,10 @@ TARGET_KERNEL_ARCH        := arm64
 TARGET_KERNEL_SOURCE      := kernel/orangepi/zero3
 TARGET_KERNEL_CONFIG      := pulsaros_zero3_defconfig
 
-# Using prebuilt kernel from Orange Pi (recommended at start):
-TARGET_PREBUILT_KERNEL    := $(LOCAL_PATH)/prebuilt/kernel
-BOARD_PREBUILT_DTBOIMAGE  := $(LOCAL_PATH)/prebuilt/dtbo.img
-BOARD_PREBUILT_DTBIMAGE   := $(LOCAL_PATH)/prebuilt/sun50iw9p1-orangepi-zero3.dtb
+# Using kernel artifacts built by Orange Pi Longan for the apollo_p2/Zero 3 board.
+TARGET_PREBUILT_KERNEL    := longan/out/h618/p2/android/bImage
+BOARD_PREBUILT_DTBIMAGE   := longan/out/h618/p2/android/sunxi.dtb
+BOARD_DTBO_SUPPORT        := false
 
 # Kernel command line arguments
 BOARD_KERNEL_CMDLINE := \

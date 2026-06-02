@@ -20,12 +20,16 @@ $(call inherit-product, vendor/pulsaros/pulsaros-vendor.mk)
 # ── Identity ──────────────────────────────────────────────────────────────────
 PRODUCT_PLATFORM_PATH := $(shell dirname $(lastword $(MAKEFILE_LIST)))
 TARGET_BOARD_IC       := h618
+PRODUCT_PREBUILT_PATH := longan/out/$(TARGET_BOARD_IC)/p2/android
 PRODUCT_BRAND         := Allwinner
 PRODUCT_NAME          := pulsaros_zero3      # MUST match filename stem
 PRODUCT_DEVICE        := zero3               # device folder name
 PRODUCT_BOARD         := zero3
 PRODUCT_MODEL         := PulsarOS for Orange Pi Zero 3
 PRODUCT_MANUFACTURER  := Allwinner
+
+PRODUCT_COPY_FILES += \
+    $(PRODUCT_PREBUILT_PATH)/bImage:kernel
 
 # ── Locales ───────────────────────────────────────────────────────────────────
 PRODUCT_LOCALES := en_US ru_RU
