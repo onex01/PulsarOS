@@ -34,44 +34,19 @@ VARIANT="${2:-userdebug}"
 # NOTE: We ONLY copy our additions, never delete Orange Pi source files.
 # This allows device/ and vendor/ to contain both Orange Pi BSP and our customizations.
 sync_overlays() {
-    info "Syncing PulsarOS overlays to ${ANDROID_SRC}"
+    info "Syncing PulsarOS overlays to ${ANDROID_SRC} (with backup)"
+    bash "${REPO_DIR}/scripts/sync_and_backup.sh" "${ANDROID_SRC}"
+}
 
-    # device/softwinner/zero3/ → device/softwinner/zero3/
-    src="${REPO_DIR}/device/softwinner/zero3"
-    dst="${ANDROID_SRC}/device/softwinner/zero3"
-    if [[ -d "$src" ]]; then
-        mkdir -p "$dst"
-        rsync -av "${src}/" "${dst}/" --exclude '.git' --exclude '.gitignore'
-        ok "  device/softwinner/zero3/ synced"
+# ── Fix known libcedarx issues ───────────────────────────────────────────────
+fix_known_issues() {
+    info "Fixing known build issues..."
+    
+    # Fix CONF_ANDROID_MAJOR_VER macro duplication in libcedarx
+    if bash "${REPO_DIR}/scripts/fix-libcedarx-macros.sh" "${ANDROID_SRC}"; then
+        ok "  Known issues fixed"
     else
-        warn "  device/softwinner/zero3/ not found (is repo structure set up?)"
-    fi
-
-    # vendor/pulsaros/ → vendor/pulsaros/
-    src="${REPO_DIR}/vendor/pulsaros"
-    dst="${ANDROID_SRC}/vendor/pulsaros"
-    if [[ -d "$src" ]]; then
-        mkdir -p "$dst"
-        rsync -av "${src}/" "${dst}/" --exclude '.git' --exclude '.gitignore'
-        ok "  vendor/pulsaros/ synced"
-    else
-        warn "  vendor/pulsaros/ not found (is repo structure set up?)"
-    fi
-
-    # packages/apps/* → packages/apps/*
-    src="${REPO_DIR}/packages/apps"
-    dst="${ANDROID_SRC}/packages/apps"
-    if [[ -d "$src" ]]; then
-        mkdir -p "$dst"
-        for sub in "$src"/*; do
-            [[ -d "$sub" ]] || continue
-            subname=$(basename "$sub")
-            mkdir -p "${dst}/${subname}"
-            rsync -av "${sub}/" "${dst}/${subname}/" --exclude '.git' --exclude '.gitignore'
-            ok "  packages/apps/${subname}/ synced"
-        done
-    else
-        warn "  packages/apps/ not found (is repo structure set up?)"
+        warn "  Issue with known-issues fixer (continuing anyway)"
     fi
 }
 
@@ -97,6 +72,35 @@ apply_source_patches() {
     done
 }
 
+check_prebuilt_clang_libs() {
+    local clang_bin="${ANDROID_SRC}/prebuilts/clang/host/linux-x86/clang-3289846/bin/llvm-as"
+    if [[ ! -x "${clang_bin}" ]]; then
+        warn "Prebuilt clang binary not found: ${clang_bin}. Skipping shared library check."
+        return 0
+    fi
+
+    if ! command -v ldd &>/dev/null; then
+        warn "ldd not available; cannot verify prebuilts shared libraries."
+        return 0
+    fi
+
+    local missing
+    missing=$(ldd "${clang_bin}" 2>/dev/null | grep -E 'not found|no such file' || true)
+    if [[ -n "${missing}" ]]; then
+        cat <<EOF >&2
+[ERROR] Prebuilt clang host tool is missing shared libraries:
+${missing}
+
+Install required packages and retry. On Ubuntu/Debian:
+  sudo apt update
+  sudo apt install libncurses5 lib32ncurses5-dev
+
+If you already installed dependencies, make sure the host tool is running on the same architecture as your OS.
+EOF
+        exit 1
+    fi
+}
+
 # ── Build ─────────────────────────────────────────────────────────────────────
 do_build() {
     info "Building PulsarOS v${PULSAR_VERSION} (${VARIANT})"
@@ -113,6 +117,12 @@ do_build() {
 
     # shellcheck disable=SC1091
     source build/envsetup.sh
+
+    # Check prebuilts host tool dependencies early.
+    check_prebuilt_clang_libs
+
+    # Fix known build issues before lunch
+    fix_known_issues
 
     # lunch target: pulsaros_zero3-userdebug
     local LUNCH_TARGET="${PRODUCT}-${VARIANT}"
