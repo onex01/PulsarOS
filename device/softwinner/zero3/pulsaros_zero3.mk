@@ -4,12 +4,16 @@
 PRODUCT_PLATFORM_PATH := $(shell dirname $(lastword $(MAKEFILE_LIST)))
 
 # ── Base AOSP products ────────────────────────────────────────────────────────
-$(call inherit-product, $(SRC_TARGET_DIR)/product/core_64_bit.mk)
 $(call inherit-product, $(SRC_TARGET_DIR)/product/full_base.mk)
 
 # ── Allwinner common configs ──────────────────────────────────────────────────
-# (If Orange Pi BSP provides these, inherit them for base GPIO/clocks/etc.)
-# $(call inherit-product, device/softwinner/common/common.mk)
+$(call inherit-product, device/softwinner/apollo/common/media/config.mk)
+$(call inherit-product, device/softwinner/apollo/common/system/config.mk)
+$(call inherit-product, device/softwinner/apollo/common/display/config.mk)
+$(call inherit-product, device/softwinner/apollo/common/input/config.mk)
+$(call inherit-product, device/softwinner/apollo/common/storage/config.mk)
+$(call inherit-product, device/softwinner/apollo/common/overlay/config.mk)
+$(call inherit-product, device/softwinner/apollo/common/misc/config.mk)
 
 # ── Device tree ───────────────────────────────────────────────────────────────
 $(call inherit-product, device/softwinner/zero3/device.mk)
@@ -41,16 +45,19 @@ PRODUCT_CHARACTERISTICS := tablet,nosdcard
 PRODUCT_PACKAGES += \
     FakeGapps
 
+# ── Disable uses-library check for prebuilt APKs ─────────────────────────────
+PRODUCT_BROKEN_VERIFY_USES_LIBRARIES := true
+
 # ── PulsarOS apps ────────────────────────────────────────────────────────────
 PRODUCT_PACKAGES += \
     PulsarSetup \
     ConsoleLauncher \
-    TVBro
+    TVBro \
+    Daijishou
 
-# ── Prebuilt APKs (RetroArch, ES-DE, Kodi) ───────────────────────────────────
+# ── Prebuilt APKs (RetroArch, Kodi) ─────────────────────────────────────────
 PRODUCT_PACKAGES += \
     RetroArch \
-    EmulationStation \
     Kodi
 
 # ── System properties ────────────────────────────────────────────────────────

@@ -1,0 +1,11 @@
+diff --git a/build/soong/cc/config/global.go b/build/soong/cc/config/global.go
+--- a/build/soong/cc/config/global.go
++++ b/build/soong/cc/config/global.go
+@@ -130,6 +130,8 @@
+ 		"-Wno-void-pointer-to-int-cast",
+ 		// http://b/161386391 for -Wno-pointer-to-int-cast
+ 		"-Wno-pointer-to-int-cast",
++		// 32-bit binder (BINDER_IPC_32BIT) casts binder_size_t to void*
++		"-Wno-int-to-void-pointer-cast",
+ 		"-Werror=fortify-source",
+ 	}

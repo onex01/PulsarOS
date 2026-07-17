@@ -1,39 +1,41 @@
-# PulsarOS Core Whitelist — Top 24 for Allwinner H618 (Cortex-A53 × 4)
-# Отбор: стабильность + производительность на Mali G31
-# Формат: имя_ядра_без_суффикса (для Android APK: libretro_имя.so)
+# PulsarOS Core Whitelist — 26 cores for Allwinner H618 (Cortex-A53 × 4)
+# Based on ArkOS/R36S compatibility (RK3326-class performance)
+# SPDX-License-Identifier: MIT
 
-# ── Nintendo (8) ────────────────────────────────────────────────────────────
-nestopia
-snes9x
-mgba
-gambatte
-sameboy
-melonds
-mupen64plus_next
-mednafen_pce_fast
+# ── Nintendo (9) ────────────────────────────────────────────────────────────
+fceumm            # NES — fast, stable
+snes9x            # SNES — best compatibility
+gambatte          # Game Boy / GBC — accurate, lightweight
+mgba              # GBA — accurate, good performance
+melonds           # Nintendo DS
+mupen64plus_next  # Nintendo 64 — most compatible
+mednafen_pce_fast # PC Engine / TurboGrafx-16
 
 # ── Sega (5) ─────────────────────────────────────────────────────────────────
-genesis_plus_gx
-picodrive
-smsplus
-gearcoleco
-yabasanshiro
+smsplus_gx        # Master System / Game Gear
+genesis_plus_gx   # Mega Drive / Genesis / Sega CD
+picodrive         # Sega 32X / Mega Drive (alternative)
 
 # ── Sony (2) ─────────────────────────────────────────────────────────────────
-pcsx_rearmed
-ppsspp
+pcsx_rearmed      # PlayStation 1 — MIPS JIT, great on ARM
+ppsspp            # PSP — not all games full speed
 
-# ── Arcade / Neo Geo (3) ─────────────────────────────────────────────────────
-fbneo
-mame2003_plus
-neocd
+# ── Arcade / Neo Geo (2) ────────────────────────────────────────────────────
+fbneo             # Final Burn Neo (Neo Geo, CPS1/2/3, arcade)
+mame2003_plus     # MAME 2003+ (broader arcade compatibility)
 
-# ── Atari / 8-bit (4) ────────────────────────────────────────────────────────
-stella
-handy
-prosystem
-atari800
+# ── Atari (4) ────────────────────────────────────────────────────────────────
+stella            # Atari 2600
+handy             # Atari Lynx
+prosystem         # Atari 7800
+atari800          # Atari 8-bit computers
 
-# ── Engines / Other (2) ──────────────────────────────────────────────────────
-scummvm
-prboom
+# ── Other Systems (4) ───────────────────────────────────────────────────────
+bluemsx           # MSX / MSX2
+mednafen_wswan    # WonderSwan / WonderSwan Color
+mednafen_pokemini # Pokemon Mini
+puae              # Amiga (PUAE emulator)
+
+# ── Engines (2) ──────────────────────────────────────────────────────────────
+scummvm           # SCUMM adventure games
+prboom            # Doom engine (PrBoom)

@@ -5,8 +5,13 @@ out-*/
 **/bin/
 **/gen/
 *.apk
+vendor/pulsaros/prebuilt/apk/*.apk
 *.img
 *.zip
+*.so
+
+# Prebuilt cores (downloaded, not tracked)
+vendor/pulsaros/prebuilt/cores/*.so
 
 # IDE
 .idea/
@@ -29,7 +34,7 @@ logs/
 *.tmp
 .cache/
 
-# Local config (НЕ коммитить персональные пути)
+# Local config
 local.conf
 build.env
 .userconfig
@@ -48,3 +53,7 @@ __pycache__/
 
 # Code history
 .history/
+
+# AI agent
+.mimocode/
+.kilo/

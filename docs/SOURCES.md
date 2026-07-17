@@ -15,4 +15,5 @@
 - Kodi: https://github.com/xbmc/xbmc
 
 ## Как запросить исходники
-Email: (ваш контакт)
+Email: ilya.anikin.2018@list.ru
+Telegram: t.me/onex016

@@ -1,0 +1,9 @@
+diff --git a/frameworks/av/media/libcedarx/config/cedarx_config.go b/frameworks/av/media/libcedarx/config/cedarx_config.go
+--- a/frameworks/av/media/libcedarx/config/cedarx_config.go
++++ b/frameworks/av/media/libcedarx/config/cedarx_config.go
+@@ -194,6 +194,7 @@
+             cdxCfgType {"apollo",  apollo_S_cflags},
+             cdxCfgType {"mercury",  mercury_S_cflags},
++            cdxCfgType {"sun50iw9", apollo_S_cflags},
+         },
+     },

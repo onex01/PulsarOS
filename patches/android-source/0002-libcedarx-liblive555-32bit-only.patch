@@ -1,0 +1,11 @@
+diff --git a/frameworks/av/media/libcedarx/libcore/stream/base/Android.bp b/frameworks/av/media/libcedarx/libcore/stream/base/Android.bp
+--- a/frameworks/av/media/libcedarx/libcore/stream/base/Android.bp
++++ b/frameworks/av/media/libcedarx/libcore/stream/base/Android.bp
+@@ -1,6 +1,7 @@
+ cc_library_shared {
+     name: "libcdx_stream",
+ 
+     defaults: ["libcdx_config_defaults"],
++    compile_multilib: "32",
+ 
+     srcs: ["CdxStream.c"],

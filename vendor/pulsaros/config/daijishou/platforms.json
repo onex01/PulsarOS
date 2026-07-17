@@ -1,0 +1,768 @@
+{
+  "platforms": [
+    {
+      "name": "Nintendo Entertainment System",
+      "uniqueId": "nes",
+      "shortname": "nes",
+      "description": "Nintendo Entertainment System",
+      "acceptedFilenameRegex": "^(?!(?:\\._|\\.).*).*$",
+      "scraperSourceList": [
+        "LIBRETRO:Nintendo - Nintendo Entertainment System"
+      ],
+      "boxArtAspectRatioId": 3,
+      "useCustomBoxArtAspectRatio": false,
+      "customBoxArtAspectRatio": null,
+      "screenAspectRatioId": 2,
+      "useCustomScreenAspectRatio": false,
+      "customScreenAspectRatio": null,
+      "retroAchievementsConsoleIdList": [7],
+      "extra": "",
+      "playerList": [
+        {
+          "name": "RetroArch - FCEUmm",
+          "uniqueId": "nes.ra.fceumm",
+          "description": "NES emulator via RetroArch FCEUmm core",
+          "acceptedFilenameRegex": "^(.*)\\.(?:bin|fds|nes|nsf|qd|rom|unf|unif|zip|7z)$",
+          "amStartArguments": "am start -n com.retroarch/.browser.retroactivity.RetroActivityFuture -e ROM {file.path} -e LIBRETRO fceumm -e CONFIGFILE /storage/PulsarOS/retroarch/retroarch.cfg",
+          "killPackageProcesses": true,
+          "killPackageProcessesWarning": true,
+          "extra": ""
+        }
+      ]
+    },
+    {
+      "name": "Super Nintendo Entertainment System",
+      "uniqueId": "snes",
+      "shortname": "snes",
+      "description": "Super Nintendo Entertainment System",
+      "acceptedFilenameRegex": "^(?!(?:\\._|\\.).*).*$",
+      "scraperSourceList": [
+        "LIBRETRO:Nintendo - Super Nintendo Entertainment System"
+      ],
+      "boxArtAspectRatioId": 3,
+      "useCustomBoxArtAspectRatio": false,
+      "customBoxArtAspectRatio": null,
+      "screenAspectRatioId": 2,
+      "useCustomScreenAspectRatio": false,
+      "customScreenAspectRatio": null,
+      "retroAchievementsConsoleIdList": [19],
+      "extra": "",
+      "playerList": [
+        {
+          "name": "RetroArch - Snes9x",
+          "uniqueId": "snes.ra.snes9x",
+          "description": "SNES emulator via RetroArch Snes9x core",
+          "acceptedFilenameRegex": "^(.*)\\.(?:sfc|smc|zip|7z)$",
+          "amStartArguments": "am start -n com.retroarch/.browser.retroactivity.RetroActivityFuture -e ROM {file.path} -e LIBRETRO snes9x -e CONFIGFILE /storage/PulsarOS/retroarch/retroarch.cfg",
+          "killPackageProcesses": true,
+          "killPackageProcessesWarning": true,
+          "extra": ""
+        }
+      ]
+    },
+    {
+      "name": "Game Boy",
+      "uniqueId": "gb",
+      "shortname": "gb",
+      "description": "Nintendo Game Boy",
+      "acceptedFilenameRegex": "^(?!(?:\\._|\\.).*).*$",
+      "scraperSourceList": [
+        "LIBRETRO:Nintendo - Game Boy"
+      ],
+      "boxArtAspectRatioId": 3,
+      "useCustomBoxArtAspectRatio": false,
+      "customBoxArtAspectRatio": null,
+      "screenAspectRatioId": 2,
+      "useCustomScreenAspectRatio": false,
+      "customScreenAspectRatio": null,
+      "retroAchievementsConsoleIdList": [4],
+      "extra": "",
+      "playerList": [
+        {
+          "name": "RetroArch - Gambatte",
+          "uniqueId": "gb.ra.gambatte",
+          "description": "Game Boy emulator via RetroArch Gambatte core",
+          "acceptedFilenameRegex": "^(.*)\\.(?:gb|zip|7z)$",
+          "amStartArguments": "am start -n com.retroarch/.browser.retroactivity.RetroActivityFuture -e ROM {file.path} -e LIBRETRO gambatte -e CONFIGFILE /storage/PulsarOS/retroarch/retroarch.cfg",
+          "killPackageProcesses": true,
+          "killPackageProcessesWarning": true,
+          "extra": ""
+        }
+      ]
+    },
+    {
+      "name": "Game Boy Color",
+      "uniqueId": "gbc",
+      "shortname": "gbc",
+      "description": "Nintendo Game Boy Color",
+      "acceptedFilenameRegex": "^(?!(?:\\._|\\.).*).*$",
+      "scraperSourceList": [
+        "LIBRETRO:Nintendo - Game Boy Color"
+      ],
+      "boxArtAspectRatioId": 3,
+      "useCustomBoxArtAspectRatio": false,
+      "customBoxArtAspectRatio": null,
+      "screenAspectRatioId": 2,
+      "useCustomScreenAspectRatio": false,
+      "customScreenAspectRatio": null,
+      "retroAchievementsConsoleIdList": [11],
+      "extra": "",
+      "playerList": [
+        {
+          "name": "RetroArch - Gambatte",
+          "uniqueId": "gbc.ra.gambatte",
+          "description": "Game Boy Color emulator via RetroArch Gambatte core",
+          "acceptedFilenameRegex": "^(.*)\\.(?:gbc|zip|7z)$",
+          "amStartArguments": "am start -n com.retroarch/.browser.retroactivity.RetroActivityFuture -e ROM {file.path} -e LIBRETRO gambatte -e CONFIGFILE /storage/PulsarOS/retroarch/retroarch.cfg",
+          "killPackageProcesses": true,
+          "killPackageProcessesWarning": true,
+          "extra": ""
+        }
+      ]
+    },
+    {
+      "name": "Game Boy Advance",
+      "uniqueId": "gba",
+      "shortname": "gba",
+      "description": "Nintendo Game Boy Advance",
+      "acceptedFilenameRegex": "^(?!(?:\\._|\\.).*).*$",
+      "scraperSourceList": [
+        "LIBRETRO:Nintendo - Game Boy Advance"
+      ],
+      "boxArtAspectRatioId": 3,
+      "useCustomBoxArtAspectRatio": false,
+      "customBoxArtAspectRatio": null,
+      "screenAspectRatioId": 2,
+      "useCustomScreenAspectRatio": false,
+      "customScreenAspectRatio": null,
+      "retroAchievementsConsoleIdList": [12],
+      "extra": "",
+      "playerList": [
+        {
+          "name": "RetroArch - mGBA",
+          "uniqueId": "gba.ra.mgba",
+          "description": "GBA emulator via RetroArch mGBA core",
+          "acceptedFilenameRegex": "^(.*)\\.(?:gba|zip|7z)$",
+          "amStartArguments": "am start -n com.retroarch/.browser.retroactivity.RetroActivityFuture -e ROM {file.path} -e LIBRETRO mgba -e CONFIGFILE /storage/PulsarOS/retroarch/retroarch.cfg",
+          "killPackageProcesses": true,
+          "killPackageProcessesWarning": true,
+          "extra": ""
+        }
+      ]
+    },
+    {
+      "name": "Nintendo 64",
+      "uniqueId": "n64",
+      "shortname": "n64",
+      "description": "Nintendo 64",
+      "acceptedFilenameRegex": "^(?!(?:\\._|\\.).*).*$",
+      "scraperSourceList": [
+        "LIBRETRO:Nintendo - Nintendo 64"
+      ],
+      "boxArtAspectRatioId": 3,
+      "useCustomBoxArtAspectRatio": false,
+      "customBoxArtAspectRatio": null,
+      "screenAspectRatioId": 2,
+      "useCustomScreenAspectRatio": false,
+      "customScreenAspectRatio": null,
+      "retroAchievementsConsoleIdList": [17],
+      "extra": "",
+      "playerList": [
+        {
+          "name": "RetroArch - mupen64plus_next",
+          "uniqueId": "n64.ra.mupen64plus_next",
+          "description": "N64 emulator via RetroArch mupen64plus_next core",
+          "acceptedFilenameRegex": "^(.*)\\.(?:n64|z64|v64|zip|7z)$",
+          "amStartArguments": "am start -n com.retroarch/.browser.retroactivity.RetroActivityFuture -e ROM {file.path} -e LIBRETRO mupen64plus_next -e CONFIGFILE /storage/PulsarOS/retroarch/retroarch.cfg",
+          "killPackageProcesses": true,
+          "killPackageProcessesWarning": true,
+          "extra": ""
+        }
+      ]
+    },
+    {
+      "name": "Nintendo DS",
+      "uniqueId": "nds",
+      "shortname": "nds",
+      "description": "Nintendo DS",
+      "acceptedFilenameRegex": "^(?!(?:\\._|\\.).*).*$",
+      "scraperSourceList": [
+        "LIBRETRO:Nintendo - Nintendo DS"
+      ],
+      "boxArtAspectRatioId": 3,
+      "useCustomBoxArtAspectRatio": false,
+      "customBoxArtAspectRatio": null,
+      "screenAspectRatioId": 2,
+      "useCustomScreenAspectRatio": false,
+      "customScreenAspectRatio": null,
+      "retroAchievementsConsoleIdList": [18],
+      "extra": "",
+      "playerList": [
+        {
+          "name": "RetroArch - melonDS",
+          "uniqueId": "nds.ra.melonDS",
+          "description": "NDS emulator via RetroArch melonDS core",
+          "acceptedFilenameRegex": "^(.*)\\.(?:nds|zip|7z)$",
+          "amStartArguments": "am start -n com.retroarch/.browser.retroactivity.RetroActivityFuture -e ROM {file.path} -e LIBRETRO melonds -e CONFIGFILE /storage/PulsarOS/retroarch/retroarch.cfg",
+          "killPackageProcesses": true,
+          "killPackageProcessesWarning": true,
+          "extra": ""
+        }
+      ]
+    },
+    {
+      "name": "Sega Master System",
+      "uniqueId": "mastersystem",
+      "shortname": "mastersystem",
+      "description": "Sega Master System",
+      "acceptedFilenameRegex": "^(?!(?:\\._|\\.).*).*$",
+      "scraperSourceList": [
+        "LIBRETRO:Sega - Master System"
+      ],
+      "boxArtAspectRatioId": 3,
+      "useCustomBoxArtAspectRatio": false,
+      "customBoxArtAspectRatio": null,
+      "screenAspectRatioId": 2,
+      "useCustomScreenAspectRatio": false,
+      "customScreenAspectRatio": null,
+      "retroAchievementsConsoleIdList": [29],
+      "extra": "",
+      "playerList": [
+        {
+          "name": "RetroArch - Genesis Plus GX",
+          "uniqueId": "mastersystem.ra.genesis_plus_gx",
+          "description": "Master System emulator via RetroArch Genesis Plus GX core",
+          "acceptedFilenameRegex": "^(.*)\\.(?:sms|bin|zip|7z)$",
+          "amStartArguments": "am start -n com.retroarch/.browser.retroactivity.RetroActivityFuture -e ROM {file.path} -e LIBRETRO genesis_plus_gx -e CONFIGFILE /storage/PulsarOS/retroarch/retroarch.cfg",
+          "killPackageProcesses": true,
+          "killPackageProcessesWarning": true,
+          "extra": ""
+        }
+      ]
+    },
+    {
+      "name": "Sega Game Gear",
+      "uniqueId": "gamegear",
+      "shortname": "gamegear",
+      "description": "Sega Game Gear",
+      "acceptedFilenameRegex": "^(?!(?:\\._|\\.).*).*$",
+      "scraperSourceList": [
+        "LIBRETRO:Sega - Game Gear"
+      ],
+      "boxArtAspectRatioId": 3,
+      "useCustomBoxArtAspectRatio": false,
+      "customBoxArtAspectRatio": null,
+      "screenAspectRatioId": 2,
+      "useCustomScreenAspectRatio": false,
+      "customScreenAspectRatio": null,
+      "retroAchievementsConsoleIdList": [2],
+      "extra": "",
+      "playerList": [
+        {
+          "name": "RetroArch - Genesis Plus GX",
+          "uniqueId": "gamegear.ra.genesis_plus_gx",
+          "description": "Game Gear emulator via RetroArch Genesis Plus GX core",
+          "acceptedFilenameRegex": "^(.*)\\.(?:gg|bin|zip|7z)$",
+          "amStartArguments": "am start -n com.retroarch/.browser.retroactivity.RetroActivityFuture -e ROM {file.path} -e LIBRETRO genesis_plus_gx -e CONFIGFILE /storage/PulsarOS/retroarch/retroarch.cfg",
+          "killPackageProcesses": true,
+          "killPackageProcessesWarning": true,
+          "extra": ""
+        }
+      ]
+    },
+    {
+      "name": "Sega Genesis / Mega Drive",
+      "uniqueId": "megadrive",
+      "shortname": "megadrive",
+      "description": "Sega Genesis / Mega Drive",
+      "acceptedFilenameRegex": "^(?!(?:\\._|\\.).*).*$",
+      "scraperSourceList": [
+        "LIBRETRO:Sega - Mega Drive"
+      ],
+      "boxArtAspectRatioId": 3,
+      "useCustomBoxArtAspectRatio": false,
+      "customBoxArtAspectRatio": null,
+      "screenAspectRatioId": 2,
+      "useCustomScreenAspectRatio": false,
+      "customScreenAspectRatio": null,
+      "retroAchievementsConsoleIdList": [16],
+      "extra": "",
+      "playerList": [
+        {
+          "name": "RetroArch - Genesis Plus GX",
+          "uniqueId": "megadrive.ra.genesis_plus_gx",
+          "description": "Mega Drive emulator via RetroArch Genesis Plus GX core",
+          "acceptedFilenameRegex": "^(.*)\\.(?:md|gen|bin|zip|7z)$",
+          "amStartArguments": "am start -n com.retroarch/.browser.retroactivity.RetroActivityFuture -e ROM {file.path} -e LIBRETRO genesis_plus_gx -e CONFIGFILE /storage/PulsarOS/retroarch/retroarch.cfg",
+          "killPackageProcesses": true,
+          "killPackageProcessesWarning": true,
+          "extra": ""
+        }
+      ]
+    },
+    {
+      "name": "Sega CD",
+      "uniqueId": "segacd",
+      "shortname": "segacd",
+      "description": "Sega CD / Mega CD",
+      "acceptedFilenameRegex": "^(?!(?:\\._|\\.).*).*$",
+      "scraperSourceList": [
+        "LIBRETRO:Sega - Mega CD"
+      ],
+      "boxArtAspectRatioId": 3,
+      "useCustomBoxArtAspectRatio": false,
+      "customBoxArtAspectRatio": null,
+      "screenAspectRatioId": 2,
+      "useCustomScreenAspectRatio": false,
+      "customScreenAspectRatio": null,
+      "retroAchievementsConsoleIdList": [],
+      "extra": "",
+      "playerList": [
+        {
+          "name": "RetroArch - Genesis Plus GX",
+          "uniqueId": "segacd.ra.genesis_plus_gx",
+          "description": "Sega CD emulator via RetroArch Genesis Plus GX core",
+          "acceptedFilenameRegex": "^(.*)\\.(?:cue|iso|chd|bin)$",
+          "amStartArguments": "am start -n com.retroarch/.browser.retroactivity.RetroActivityFuture -e ROM {file.path} -e LIBRETRO genesis_plus_gx -e CONFIGFILE /storage/PulsarOS/retroarch/retroarch.cfg",
+          "killPackageProcesses": true,
+          "killPackageProcessesWarning": true,
+          "extra": ""
+        }
+      ]
+    },
+    {
+      "name": "Sega 32X",
+      "uniqueId": "sega32x",
+      "shortname": "sega32x",
+      "description": "Sega 32X",
+      "acceptedFilenameRegex": "^(?!(?:\\._|\\.).*).*$",
+      "scraperSourceList": [
+        "LIBRETRO:Sega - 32X"
+      ],
+      "boxArtAspectRatioId": 3,
+      "useCustomBoxArtAspectRatio": false,
+      "customBoxArtAspectRatio": null,
+      "screenAspectRatioId": 2,
+      "useCustomScreenAspectRatio": false,
+      "customScreenAspectRatio": null,
+      "retroAchievementsConsoleIdList": [],
+      "extra": "",
+      "playerList": [
+        {
+          "name": "RetroArch - PicoDrive",
+          "uniqueId": "sega32x.ra.picodrive",
+          "description": "32X emulator via RetroArch PicoDrive core",
+          "acceptedFilenameRegex": "^(.*)\\.(?:32x|smd|bin|zip|7z)$",
+          "amStartArguments": "am start -n com.retroarch/.browser.retroactivity.RetroActivityFuture -e ROM {file.path} -e LIBRETRO picodrive -e CONFIGFILE /storage/PulsarOS/retroarch/retroarch.cfg",
+          "killPackageProcesses": true,
+          "killPackageProcessesWarning": true,
+          "extra": ""
+        }
+      ]
+    },
+    {
+      "name": "Sony PlayStation",
+      "uniqueId": "psx",
+      "shortname": "psx",
+      "description": "Sony PlayStation",
+      "acceptedFilenameRegex": "^(?!(?:\\._|\\.).*).*$",
+      "scraperSourceList": [
+        "LIBRETRO:Sony - PlayStation"
+      ],
+      "boxArtAspectRatioId": 3,
+      "useCustomBoxArtAspectRatio": false,
+      "customBoxArtAspectRatio": null,
+      "screenAspectRatioId": 2,
+      "useCustomScreenAspectRatio": false,
+      "customScreenAspectRatio": null,
+      "retroAchievementsConsoleIdList": [18],
+      "extra": "",
+      "playerList": [
+        {
+          "name": "RetroArch - PCSX ReARMed",
+          "uniqueId": "psx.ra.pcsx_rearmed",
+          "description": "PS1 emulator via RetroArch PCSX ReARMed core",
+          "acceptedFilenameRegex": "^(.*)\\.(?:bin|cue|img|iso|pbp|chd|zip|7z)$",
+          "amStartArguments": "am start -n com.retroarch/.browser.retroactivity.RetroActivityFuture -e ROM {file.path} -e LIBRETRO pcsx_rearmed -e CONFIGFILE /storage/PulsarOS/retroarch/retroarch.cfg",
+          "killPackageProcesses": true,
+          "killPackageProcessesWarning": true,
+          "extra": ""
+        }
+      ]
+    },
+    {
+      "name": "Sony PlayStation Portable",
+      "uniqueId": "psp",
+      "shortname": "psp",
+      "description": "Sony PlayStation Portable",
+      "acceptedFilenameRegex": "^(?!(?:\\._|\\.).*).*$",
+      "scraperSourceList": [
+        "LIBRETRO:Sony - PlayStation Portable"
+      ],
+      "boxArtAspectRatioId": 3,
+      "useCustomBoxArtAspectRatio": false,
+      "customBoxArtAspectRatio": null,
+      "screenAspectRatioId": 2,
+      "useCustomScreenAspectRatio": false,
+      "customScreenAspectRatio": null,
+      "retroAchievementsConsoleIdList": [],
+      "extra": "",
+      "playerList": [
+        {
+          "name": "RetroArch - PPSSPP",
+          "uniqueId": "psp.ra.ppsspp",
+          "description": "PSP emulator via RetroArch PPSSPP core",
+          "acceptedFilenameRegex": "^(.*)\\.(?:iso|cso|pbp|chd|zip|7z)$",
+          "amStartArguments": "am start -n com.retroarch/.browser.retroactivity.RetroActivityFuture -e ROM {file.path} -e LIBRETRO ppsspp -e CONFIGFILE /storage/PulsarOS/retroarch/retroarch.cfg",
+          "killPackageProcesses": true,
+          "killPackageProcessesWarning": true,
+          "extra": ""
+        }
+      ]
+    },
+    {
+      "name": "Neo Geo",
+      "uniqueId": "neogeo",
+      "shortname": "neogeo",
+      "description": "SNK Neo Geo",
+      "acceptedFilenameRegex": "^(?!(?:\\._|\\.).*).*$",
+      "scraperSourceList": [
+        "LIBRETRO:SNK - Neo Geo"
+      ],
+      "boxArtAspectRatioId": 3,
+      "useCustomBoxArtAspectRatio": false,
+      "customBoxArtAspectRatio": null,
+      "screenAspectRatioId": 2,
+      "useCustomScreenAspectRatio": false,
+      "customScreenAspectRatio": null,
+      "retroAchievementsConsoleIdList": [],
+      "extra": "",
+      "playerList": [
+        {
+          "name": "RetroArch - FinalBurn Neo",
+          "uniqueId": "neogeo.ra.fbneo",
+          "description": "Neo Geo emulator via RetroArch FinalBurn Neo core",
+          "acceptedFilenameRegex": "^(.*)\\.zip$",
+          "amStartArguments": "am start -n com.retroarch/.browser.retroactivity.RetroActivityFuture -e ROM {file.path} -e LIBRETRO fbneo -e CONFIGFILE /storage/PulsarOS/retroarch/retroarch.cfg",
+          "killPackageProcesses": true,
+          "killPackageProcessesWarning": true,
+          "extra": ""
+        }
+      ]
+    },
+    {
+      "name": "Arcade",
+      "uniqueId": "arcade",
+      "shortname": "arcade",
+      "description": "Arcade (MAME/FBNeo)",
+      "acceptedFilenameRegex": "^(?!(?:\\._|\\.).*).*$",
+      "scraperSourceList": [],
+      "boxArtAspectRatioId": 3,
+      "useCustomBoxArtAspectRatio": false,
+      "customBoxArtAspectRatio": null,
+      "screenAspectRatioId": 2,
+      "useCustomScreenAspectRatio": false,
+      "customScreenAspectRatio": null,
+      "retroAchievementsConsoleIdList": [],
+      "extra": "",
+      "playerList": [
+        {
+          "name": "RetroArch - FinalBurn Neo",
+          "uniqueId": "arcade.ra.fbneo",
+          "description": "Arcade emulator via RetroArch FinalBurn Neo core",
+          "acceptedFilenameRegex": "^(.*)\\.zip$",
+          "amStartArguments": "am start -n com.retroarch/.browser.retroactivity.RetroActivityFuture -e ROM {file.path} -e LIBRETRO fbneo -e CONFIGFILE /storage/PulsarOS/retroarch/retroarch.cfg",
+          "killPackageProcesses": true,
+          "killPackageProcessesWarning": true,
+          "extra": ""
+        }
+      ]
+    },
+    {
+      "name": "Atari 2600",
+      "uniqueId": "atari2600",
+      "shortname": "atari2600",
+      "description": "Atari 2600",
+      "acceptedFilenameRegex": "^(?!(?:\\._|\\.).*).*$",
+      "scraperSourceList": [
+        "LIBRETRO:Atari - 2600"
+      ],
+      "boxArtAspectRatioId": 3,
+      "useCustomBoxArtAspectRatio": false,
+      "customBoxArtAspectRatio": null,
+      "screenAspectRatioId": 2,
+      "useCustomScreenAspectRatio": false,
+      "customScreenAspectRatio": null,
+      "retroAchievementsConsoleIdList": [25],
+      "extra": "",
+      "playerList": [
+        {
+          "name": "RetroArch - Stella",
+          "uniqueId": "atari2600.ra.stella",
+          "description": "Atari 2600 emulator via RetroArch Stella core",
+          "acceptedFilenameRegex": "^(.*)\\.(?:bin|a26|zip|7z)$",
+          "amStartArguments": "am start -n com.retroarch/.browser.retroactivity.RetroActivityFuture -e ROM {file.path} -e LIBRETRO stella -e CONFIGFILE /storage/PulsarOS/retroarch/retroarch.cfg",
+          "killPackageProcesses": true,
+          "killPackageProcessesWarning": true,
+          "extra": ""
+        }
+      ]
+    },
+    {
+      "name": "Atari 7800",
+      "uniqueId": "atari7800",
+      "shortname": "atari7800",
+      "description": "Atari 7800",
+      "acceptedFilenameRegex": "^(?!(?:\\._|\\.).*).*$",
+      "scraperSourceList": [
+        "LIBRETRO:Atari - 7800"
+      ],
+      "boxArtAspectRatioId": 3,
+      "useCustomBoxArtAspectRatio": false,
+      "customBoxArtAspectRatio": null,
+      "screenAspectRatioId": 2,
+      "useCustomScreenAspectRatio": false,
+      "customScreenAspectRatio": null,
+      "retroAchievementsConsoleIdList": [27],
+      "extra": "",
+      "playerList": [
+        {
+          "name": "RetroArch - ProSystem",
+          "uniqueId": "atari7800.ra.prosystem",
+          "description": "Atari 7800 emulator via RetroArch ProSystem core",
+          "acceptedFilenameRegex": "^(.*)\\.(?:a78|bin|zip|7z)$",
+          "amStartArguments": "am start -n com.retroarch/.browser.retroactivity.RetroActivityFuture -e ROM {file.path} -e LIBRETRO prosystem -e CONFIGFILE /storage/PulsarOS/retroarch/retroarch.cfg",
+          "killPackageProcesses": true,
+          "killPackageProcessesWarning": true,
+          "extra": ""
+        }
+      ]
+    },
+    {
+      "name": "Atari Lynx",
+      "uniqueId": "lynx",
+      "shortname": "lynx",
+      "description": "Atari Lynx",
+      "acceptedFilenameRegex": "^(?!(?:\\._|\\.).*).*$",
+      "scraperSourceList": [
+        "LIBRETRO:Atari - Lynx"
+      ],
+      "boxArtAspectRatioId": 3,
+      "useCustomBoxArtAspectRatio": false,
+      "customBoxArtAspectRatio": null,
+      "screenAspectRatioId": 2,
+      "useCustomScreenAspectRatio": false,
+      "customScreenAspectRatio": null,
+      "retroAchievementsConsoleIdList": [14],
+      "extra": "",
+      "playerList": [
+        {
+          "name": "RetroArch - Handy",
+          "uniqueId": "lynx.ra.handy",
+          "description": "Atari Lynx emulator via RetroArch Handy core",
+          "acceptedFilenameRegex": "^(.*)\\.(?:lnx|zip|7z)$",
+          "amStartArguments": "am start -n com.retroarch/.browser.retroactivity.RetroActivityFuture -e ROM {file.path} -e LIBRETRO handy -e CONFIGFILE /storage/PulsarOS/retroarch/retroarch.cfg",
+          "killPackageProcesses": true,
+          "killPackageProcessesWarning": true,
+          "extra": ""
+        }
+      ]
+    },
+    {
+      "name": "Atari 8-bit",
+      "uniqueId": "atari800",
+      "shortname": "atari800",
+      "description": "Atari 8-bit Computers",
+      "acceptedFilenameRegex": "^(?!(?:\\._|\\.).*).*$",
+      "scraperSourceList": [],
+      "boxArtAspectRatioId": 3,
+      "useCustomBoxArtAspectRatio": false,
+      "customBoxArtAspectRatio": null,
+      "screenAspectRatioId": 2,
+      "useCustomScreenAspectRatio": false,
+      "customScreenAspectRatio": null,
+      "retroAchievementsConsoleIdList": [],
+      "extra": "",
+      "playerList": [
+        {
+          "name": "RetroArch - Atari800",
+          "uniqueId": "atari800.ra.atari800",
+          "description": "Atari 8-bit emulator via RetroArch Atari800 core",
+          "acceptedFilenameRegex": "^(.*)\\.(?:atr|xex|xfd|zip|7z)$",
+          "amStartArguments": "am start -n com.retroarch/.browser.retroactivity.RetroActivityFuture -e ROM {file.path} -e LIBRETRO atari800 -e CONFIGFILE /storage/PulsarOS/retroarch/retroarch.cfg",
+          "killPackageProcesses": true,
+          "killPackageProcessesWarning": true,
+          "extra": ""
+        }
+      ]
+    },
+    {
+      "name": "WonderSwan",
+      "uniqueId": "wonderswan",
+      "shortname": "wonderswan",
+      "description": "Bandai WonderSwan / WonderSwan Color",
+      "acceptedFilenameRegex": "^(?!(?:\\._|\\.).*).*$",
+      "scraperSourceList": [],
+      "boxArtAspectRatioId": 3,
+      "useCustomBoxArtAspectRatio": false,
+      "customBoxArtAspectRatio": null,
+      "screenAspectRatioId": 2,
+      "useCustomScreenAspectRatio": false,
+      "customScreenAspectRatio": null,
+      "retroAchievementsConsoleIdList": [],
+      "extra": "",
+      "playerList": [
+        {
+          "name": "RetroArch - Mednafen WonderSwan",
+          "uniqueId": "wonderswan.ra.mednafen_wswan",
+          "description": "WonderSwan emulator via RetroArch Mednafen WonderSwan core",
+          "acceptedFilenameRegex": "^(.*)\\.(?:ws|wsc|zip|7z)$",
+          "amStartArguments": "am start -n com.retroarch/.browser.retroactivity.RetroActivityFuture -e ROM {file.path} -e LIBRETRO mednafen_wswan -e CONFIGFILE /storage/PulsarOS/retroarch/retroarch.cfg",
+          "killPackageProcesses": true,
+          "killPackageProcessesWarning": true,
+          "extra": ""
+        }
+      ]
+    },
+    {
+      "name": "Pokemon Mini",
+      "uniqueId": "pokemonmini",
+      "shortname": "pokemonmini",
+      "description": "Nintendo Pokemon Mini",
+      "acceptedFilenameRegex": "^(?!(?:\\._|\\.).*).*$",
+      "scraperSourceList": [],
+      "boxArtAspectRatioId": 3,
+      "useCustomBoxArtAspectRatio": false,
+      "customBoxArtAspectRatio": null,
+      "screenAspectRatioId": 2,
+      "useCustomScreenAspectRatio": false,
+      "customScreenAspectRatio": null,
+      "retroAchievementsConsoleIdList": [],
+      "extra": "",
+      "playerList": [
+        {
+          "name": "RetroArch - Mednafen Pokemon Mini",
+          "uniqueId": "pokemonmini.ra.mednafen_pokemini",
+          "description": "Pokemon Mini emulator via RetroArch Mednafen Pokemon Mini core",
+          "acceptedFilenameRegex": "^(.*)\\.(?:min|zip|7z)$",
+          "amStartArguments": "am start -n com.retroarch/.browser.retroactivity.RetroActivityFuture -e ROM {file.path} -e LIBRETRO mednafen_pokemini -e CONFIGFILE /storage/PulsarOS/retroarch/retroarch.cfg",
+          "killPackageProcesses": true,
+          "killPackageProcessesWarning": true,
+          "extra": ""
+        }
+      ]
+    },
+    {
+      "name": "MSX",
+      "uniqueId": "msx",
+      "shortname": "msx",
+      "description": "Microsoft MSX / MSX2",
+      "acceptedFilenameRegex": "^(?!(?:\\._|\\.).*).*$",
+      "scraperSourceList": [],
+      "boxArtAspectRatioId": 3,
+      "useCustomBoxArtAspectRatio": false,
+      "customBoxArtAspectRatio": null,
+      "screenAspectRatioId": 2,
+      "useCustomScreenAspectRatio": false,
+      "customScreenAspectRatio": null,
+      "retroAchievementsConsoleIdList": [],
+      "extra": "",
+      "playerList": [
+        {
+          "name": "RetroArch - blueMSX",
+          "uniqueId": "msx.ra.bluemsx",
+          "description": "MSX emulator via RetroArch blueMSX core",
+          "acceptedFilenameRegex": "^(.*)\\.(?:rom|dsk|zip|7z)$",
+          "amStartArguments": "am start -n com.retroarch/.browser.retroactivity.RetroActivityFuture -e ROM {file.path} -e LIBRETRO bluemsx -e CONFIGFILE /storage/PulsarOS/retroarch/retroarch.cfg",
+          "killPackageProcesses": true,
+          "killPackageProcessesWarning": true,
+          "extra": ""
+        }
+      ]
+    },
+    {
+      "name": "Commodore Amiga",
+      "uniqueId": "amiga",
+      "shortname": "amiga",
+      "description": "Commodore Amiga",
+      "acceptedFilenameRegex": "^(?!(?:\\._|\\.).*).*$",
+      "scraperSourceList": [],
+      "boxArtAspectRatioId": 3,
+      "useCustomBoxArtAspectRatio": false,
+      "customBoxArtAspectRatio": null,
+      "screenAspectRatioId": 2,
+      "useCustomScreenAspectRatio": false,
+      "customScreenAspectRatio": null,
+      "retroAchievementsConsoleIdList": [],
+      "extra": "",
+      "playerList": [
+        {
+          "name": "RetroArch - PUAE",
+          "uniqueId": "amiga.ra.puae",
+          "description": "Amiga emulator via RetroArch PUAE core",
+          "acceptedFilenameRegex": "^(.*)\\.(?:adf|ipf|exe|zip|7z)$",
+          "amStartArguments": "am start -n com.retroarch/.browser.retroactivity.RetroActivityFuture -e ROM {file.path} -e LIBRETRO puae -e CONFIGFILE /storage/PulsarOS/retroarch/retroarch.cfg",
+          "killPackageProcesses": true,
+          "killPackageProcessesWarning": true,
+          "extra": ""
+        }
+      ]
+    },
+    {
+      "name": "ScummVM",
+      "uniqueId": "scummvm",
+      "shortname": "scummvm",
+      "description": "ScummVM Adventure Games",
+      "acceptedFilenameRegex": "^(?!(?:\\._|\\.).*).*$",
+      "scraperSourceList": [],
+      "boxArtAspectRatioId": 3,
+      "useCustomBoxArtAspectRatio": false,
+      "customBoxArtAspectRatio": null,
+      "screenAspectRatioId": 2,
+      "useCustomScreenAspectRatio": false,
+      "customScreenAspectRatio": null,
+      "retroAchievementsConsoleIdList": [],
+      "extra": "",
+      "playerList": [
+        {
+          "name": "RetroArch - ScummVM",
+          "uniqueId": "scummvm.ra.scummvm",
+          "description": "ScummVM engine via RetroArch ScummVM core",
+          "acceptedFilenameRegex": "^(.*)\\.zip$",
+          "amStartArguments": "am start -n com.retroarch/.browser.retroactivity.RetroActivityFuture -e ROM {file.path} -e LIBRETRO scummvm -e CONFIGFILE /storage/PulsarOS/retroarch/retroarch.cfg",
+          "killPackageProcesses": true,
+          "killPackageProcessesWarning": true,
+          "extra": ""
+        }
+      ]
+    },
+    {
+      "name": "Doom",
+      "uniqueId": "doom",
+      "shortname": "doom",
+      "description": "Doom (PrBoom)",
+      "acceptedFilenameRegex": "^(?!(?:\\._|\\.).*).*$",
+      "scraperSourceList": [],
+      "boxArtAspectRatioId": 3,
+      "useCustomBoxArtAspectRatio": false,
+      "customBoxArtAspectRatio": null,
+      "screenAspectRatioId": 2,
+      "useCustomScreenAspectRatio": false,
+      "customScreenAspectRatio": null,
+      "retroAchievementsConsoleIdList": [],
+      "extra": "",
+      "playerList": [
+        {
+          "name": "RetroArch - PrBoom",
+          "uniqueId": "doom.ra.prboom",
+          "description": "Doom engine via RetroArch PrBoom core",
+          "acceptedFilenameRegex": "^(.*)\\.(?:wad|iwad|pk3)$",
+          "amStartArguments": "am start -n com.retroarch/.browser.retroactivity.RetroActivityFuture -e ROM {file.path} -e LIBRETRO prboom -e CONFIGFILE /storage/PulsarOS/retroarch/retroarch.cfg",
+          "killPackageProcesses": true,
+          "killPackageProcessesWarning": true,
+          "extra": ""
+        }
+      ]
+    }
+  ]
+}

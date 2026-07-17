@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="240dp"
+    android:height="240dp"
+    android:viewportWidth="240"
+    android:viewportHeight="240">
+
+    <!-- Background -->
+    <path
+        android:pathData="M0,0 L240,0 L240,240 L0,240 Z"
+        android:fillColor="#0B0C10"/>
+
+    <!-- Outer ring -->
+    <path
+        android:pathData="M120,120m-108,0a108,108 0,1 1,216 0a108,108 0,1 1,-216 0"
+        android:fillColor="#0B0C10"
+        android:strokeColor="#66FCF1"
+        android:strokeWidth="2"/>
+
+    <!-- Inner circle -->
+    <path
+        android:pathData="M120,120m-85,0a85,85 0,1 1,170 0a85,85 0,1 1,-170 0"
+        android:fillColor="#0D0E15"
+        android:strokeColor="#1A1B2E"
+        android:strokeWidth="1"/>
+
+    <!-- Letter P - vertical stroke -->
+    <path
+        android:pathData="M82,65 L82,175"
+        android:fillColor="@android:color/transparent"
+        android:strokeColor="#66FCF1"
+        android:strokeWidth="14"
+        android:strokeLineCap="round"/>
+
+    <!-- Letter P - top curve -->
+    <path
+        android:pathData="M82,65 L128,65 Q160,65 160,100 Q160,135 128,135 L82,135"
+        android:fillColor="@android:color/transparent"
+        android:strokeColor="#66FCF1"
+        android:strokeWidth="14"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"/>
+
+    <!-- Accent dot -->
+    <path
+        android:pathData="M172,148m-6,0a6,6 0,1 1,12 0a6,6 0,1 1,-12 0"
+        android:fillColor="#45A29E"/>
+
+    <!-- Small accent dots -->
+    <path
+        android:pathData="M175,135m-3,0a3,3 0,1 1,6 0a3,3 0,1 1,-6 0"
+        android:fillColor="#66FCF1"
+        android:fillAlpha="0.6"/>
+
+    <path
+        android:pathData="M178,160m-2,0a2,2 0,1 1,4 0a2,2 0,1 1,-4 0"
+        android:fillColor="#66FCF1"
+        android:fillAlpha="0.4"/>
+
+    <!-- Text: PulsarOS -->
+    <path
+        android:pathData="M60,210 L180,210"
+        android:fillColor="@android:color/transparent"
+        android:strokeColor="#66FCF1"
+        android:strokeWidth="1"/>
+
+    <path
+        android:pathData="M60,220 L180,220"
+        android:fillColor="@android:color/transparent"
+        android:strokeColor="#66FCF1"
+        android:strokeWidth="1"
+        android:strokeAlpha="0.5"/>
+</vector>

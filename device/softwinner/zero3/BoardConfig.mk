@@ -6,21 +6,20 @@
 LOCAL_PATH := device/softwinner/zero3
 TARGET_COPY_OUT_VENDOR := vendor
 
+-include device/softwinner/common/config/vendorcommand.mk
+
 # ═══════════════════════════════════════════════════════════════════════════════
-# ARCHITECTURE — ОБЯЗАТЕЛЬНЫЙ БЛОК
+# ARCHITECTURE — 32-bit (matches Orange Pi BSP vendor libraries)
 # ═══════════════════════════════════════════════════════════════════════════════
 
-TARGET_ARCH         := arm64
+TARGET_ARCH         := arm
 TARGET_ARCH_VARIANT := armv8-a
-TARGET_CPU_ABI      := arm64-v8a
+TARGET_CPU_ABI      := armeabi-v7a
+TARGET_CPU_ABI2     := armeabi
 TARGET_CPU_VARIANT  := cortex-a53
 
-# 32-bit secondary ABI (for compatibility with older APK and RetroArch cores)
-TARGET_2ND_ARCH         := arm
-TARGET_2ND_ARCH_VARIANT := armv8-a
-TARGET_2ND_CPU_ABI      := armeabi-v7a
-TARGET_2ND_CPU_ABI2     := armeabi
-TARGET_2ND_CPU_VARIANT  := cortex-a53
+# 64-bit binder for compatibility with Android 12 (matches Apollo BSP)
+TARGET_USES_64_BIT_BINDER := true
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # PLATFORM
@@ -28,6 +27,8 @@ TARGET_2ND_CPU_VARIANT  := cortex-a53
 
 TARGET_BOARD_PLATFORM         := sun50iw9   # Allwinner H618 BSP platform name
 TARGET_BOARD_PLATFORM_GPU     := mali-g31
+TARGET_GPU_TYPE               := mali-g31
+$(call soong_config_add,vendor,board,$(TARGET_BOARD_PLATFORM))
 TARGET_BOOTLOADER_BOARD_NAME  := zero3
 TARGET_NO_BOOTLOADER          := true       # U-Boot is not part of Android build
 TARGET_NO_KERNEL              := false
@@ -112,3 +113,13 @@ BOARD_VENDOR_KERNEL_MODULES_LOAD := \
     sunxi_mmc.ko \
     sunxi_wlan.ko \
     mali_kbase.ko
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# GPU CONFIG (Allwinner Mali G31)
+# ═══════════════════════════════════════════════════════════════════════════════
+$(call soong_config_add,gpu,public_include_file,mali-bifrost/gralloc/src/mali_gralloc_buffer.h)
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# VINTF MANIFEST
+# ═══════════════════════════════════════════════════════════════════════════════
+DEVICE_MANIFEST_FILE += device/softwinner/zero3/config/manifest.xml

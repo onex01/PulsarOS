@@ -1,0 +1,3 @@
+// PulsarOS App Configurations
+// SPDX-License-Identifier: MIT
+// Config files are deployed via pulsaros-vendor.mk PRODUCT_COPY_FILES

@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<config>
-    <string name="ROMDirectory" value="/storage/PulsarOS/roms"/>
-    <string name="ThemeSet" value="es-de-theme-art-book"/>
-    <bool name="ScrapeVideos" value="true"/>
-    <bool name="ShowHiddenGames" value="false"/>
-    <int name="ScreenSaverTimeout" value="300"/>
-</config>

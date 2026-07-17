@@ -1,21 +1,105 @@
-# Прошивка PulsarOS на SD-карту
+# Flashing Instructions / Инструкция по прошивке
 
-## Что нужно
-- microSD 16GB+ (рекомендуется 32GB, A2-класс)
-- USB-картридер
-- Linux-машина
+> [English](#english) | [Русский](#русский)
 
-## Процесс
-\`\`\`bash
-# Определить устройство (ВНИМАТЕЛЬНО!)
-lsblk
-# Например /dev/sdc
+---
 
-# Записать
-sudo ./scripts/flash.sh pulsaros-1.0.0-alpha1.img /dev/sdc
-\`\`\`
+## English
 
-## Первый запуск
-1. Вставить SD в Orange Pi Zero 3
-2. Подключить HDMI + питание
-3. Пройти OOBE (PulsarOS Setup)
+### Prerequisites
+
+- PulsarOS firmware image (`out/PulsarOS-OPiZero3-Android12-*.img`)
+- MicroSD card (16GB+, SanDisk recommended)
+- Windows PC (for PhoenixCard)
+
+### Method 1: PhoenixCard (Recommended)
+
+Download PhoenixCard 4.3.3 with Russian localization:
+http://nskhuman.ru/allwinner/card/phoenixcard433rus.zip
+
+**Important**: Install Microsoft VisualC++ 2008 Redistributable first.
+
+#### Steps:
+1. Extract PhoenixCard from zip
+2. Run `phoenixcard.exe`
+3. Click **Image** button, select `PulsarOS-OPiZero3-Android12-*.img`
+4. Select your SD card from the dropdown
+5. **Select mode "Product"** (NOT "StartUp"!)
+6. Click **Burn** (Записать)
+7. Wait for completion
+8. Remove SD card
+
+**⚠️ WARNING**: PhoenixCard 4.2.8 defaults to "StartUp" mode for Android 12. StartUp does NOT create a partition table — the board will not boot! Always select **Product** mode.
+
+### Method 2: Linux dd (Experimental)
+
+IMAGEWTY format can be written with `dd` but may not boot on all boards:
+```bash
+sudo dd if=PulsarOS-OPiZero3-Android12-*.img of=/dev/sdX bs=4M status=progress conv=fsync
+```
+
+### First Boot
+
+1. Insert SD card into Orange Pi Zero 3
+2. Connect HDMI monitor
+3. Connect USB-C power (5V/3A)
+4. Connect gamepad via USB or Bluetooth
+5. Wait for boot animation (~30 seconds)
+6. OOBE wizard will start automatically
+
+### References
+
+- [Flashing guide (Russian)](http://nskhuman.ru/allwinner/opizero3/zero3man.php?np=15&nlang=1)
+- [PhoenixCard documentation](http://nskhuman.ru/allwinner/card/phoenixcard.php)
+- [IMAGEWTY format](http://nskhuman.ru/allwinner/firmware.php)
+
+---
+
+## Русский
+
+### Предварительные требования
+
+- Образ прошивки PulsarOS (`out/PulsarOS-OPiZero3-Android12-*.img`)
+- MicroSD карта (16GB+, рекомендуется SanDisk)
+- Windows ПК (для PhoenixCard)
+
+### Способ 1: PhoenixCard (Рекомендуется)
+
+Скачать PhoenixCard 4.3.3 с русской локализацией:
+http://nskhuman.ru/allwinner/card/phoenixcard433rus.zip
+
+**Важно**: Сначала установите Microsoft VisualC++ 2008 Redistributable.
+
+#### Пошагово:
+1. Распакуйте PhoenixCard из zip
+2. Запустите `phoenixcard.exe`
+3. Нажмите кнопку **Image**, выберите `PulsarOS-OPiZero3-Android12-*.img`
+4. Выберите SD карту из выпадающего списка
+5. **Выберите режим "Product"** (НЕ "StartUp"!)
+6. Нажмите **Burn** (Записать)
+7. Дождитесь завершения
+8. Извлеките SD карту
+
+**⚠️ ВНИМАНИЕ**: PhoenixCard 4.2.8 по умолчанию использует режим "StartUp" для Android 12. StartUp НЕ создаёт таблицу разделов — плата не загрузится! Всегда выбирайте режим **Product**.
+
+### Способ 2: Linux dd (Экспериментальный)
+
+IMAGEWTY формат можно записать через `dd`, но может не загрузиться на всех платах:
+```bash
+sudo dd if=PulsarOS-OPiZero3-Android12-*.img of=/dev/sdX bs=4M status=progress conv=fsync
+```
+
+### Первая загрузка
+
+1. Вставьте SD карту в Orange Pi Zero 3
+2. Подключите HDMI монитор
+3. Подключите USB-C питание (5V/3A)
+4. Подключите геймпад через USB или Bluetooth
+5. Дождитесь анимации загрузки (~30 секунд)
+6. Мастер начальной настройки запустится автоматически
+
+### Источники
+
+- [Инструкция по прошивке](http://nskhuman.ru/allwinner/opizero3/zero3man.php?np=15&nlang=1)
+- [Документация PhoenixCard](http://nskhuman.ru/allwinner/card/phoenixcard.php)
+- [Формат IMAGEWTY](http://nskhuman.ru/allwinner/firmware.php)

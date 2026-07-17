@@ -16,8 +16,8 @@ fi
 
 BACKUP_BASE="${ANDROID_SRC}/.pulsaros_backups"
 if [[ ! -d "${BACKUP_BASE}" ]]; then
-  echo "No backups found in ${BACKUP_BASE}"
-  exit 1
+  echo "[INFO] No backups found in ${BACKUP_BASE} - nothing to rollback"
+  exit 0
 fi
 
 if [[ -n "${TS_ARG}" ]]; then
@@ -28,18 +28,42 @@ else
 fi
 
 if [[ -z "${BACKUP_DIR}" || ! -d "${BACKUP_DIR}" ]]; then
-  echo "Backup directory not found: ${BACKUP_DIR}" >&2
-  exit 1
+  echo "[INFO] No backup directory found: ${BACKUP_DIR:-none} - nothing to rollback"
+  exit 0
 fi
 
 MANIFEST="${BACKUP_DIR}/manifest.txt"
 if [[ ! -f "${MANIFEST}" ]]; then
-  echo "Manifest not found in backup: ${MANIFEST}" >&2
-  exit 1
+  echo "[INFO] Manifest not found in backup: ${MANIFEST} - nothing to rollback"
+  exit 0
+fi
+
+# Check if there's anything to rollback
+if ! grep -qE '^(BACKED_UP|CREATED) ' "${MANIFEST}" 2>/dev/null; then
+  echo "[INFO] No entries in backup manifest - nothing to rollback"
+  rmdir "${BACKUP_DIR}" 2>/dev/null || true
+  exit 0
 fi
 
 echo "[INFO] Rolling back using backup: ${BACKUP_DIR}"
 
+# Check for OVERLAY_DIRS to remove entire directories
+if grep -q "^OVERLAY_DIRS:" "${MANIFEST}" 2>/dev/null; then
+  while IFS= read -r dir; do
+    [[ -z "${dir}" ]] && continue
+    if [[ -d "${dir}" ]]; then
+      rm -rf "${dir}"
+      echo "REMOVED overlay dir: ${dir}"
+    else
+      echo "NOT FOUND overlay dir: ${dir}"
+    fi
+  done < <(grep "^OVERLAY_DIRS:" "${MANIFEST}" | cut -d: -f2- | tr ' ' '\n' | grep -v '^$')
+  echo "[OK] Rollback finished"
+  rmdir "${BACKUP_DIR}" 2>/dev/null || true
+  exit 0
+fi
+
+# Legacy rollback for BACKED_UP/CREATED entries
 while IFS= read -r line; do
   [[ -z "${line}" ]] && continue
   case "${line}" in

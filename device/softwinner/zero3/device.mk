@@ -32,3 +32,7 @@ USE_XML_AUDIO_POLICY_CONF := 1
 
 # ── Display ────────────────────────────────────────────────────────────────────
 TARGET_SCREEN_DENSITY := 213
+
+# ── Boot Animation ─────────────────────────────────────────────────────────────
+PRODUCT_COPY_FILES += \
+    vendor/pulsaros/bootanimation/bootanimation.zip:$(TARGET_COPY_OUT_SYSTEM)/media/bootanimation.zip

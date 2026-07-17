@@ -1,5 +1,6 @@
 # PulsarOS Init Configuration
 # SPDX-License-Identifier: MIT
+# Copies configs from vendor to app data directories on first boot
 
 on post-fs-data
     mkdir /data/pulsaros 0750 system system
@@ -10,7 +11,7 @@ on property:sys.boot_completed=1
     chmod 0755 /vendor/bin/ssh-toggle.sh
     chmod 0755 /vendor/bin/set-resolution.sh
     start storage-watcher
-    # Auto-start SSH only if debug build
+    start pulsaros-setup
     exec u:r:su:s0 -- /system/bin/sh -c "[ \"$(getprop ro.build.type)\" = \"userdebug\" ] && /vendor/bin/ssh-toggle.sh start"
 
 service storage-watcher /vendor/bin/sh /vendor/bin/storage-watcher.sh
@@ -26,8 +27,22 @@ service ssh-manager /vendor/bin/sh /vendor/bin/ssh-toggle.sh start
     disabled
     oneshot
 
-# ZRAM для маломощных версий
+# PulsarOS first-boot setup: copy configs to app data dirs
+service pulsaros-setup /system/bin/sh /vendor/bin/pulsaros-firstboot.sh
+    class late_start
+    user root
+    group root
+    disabled
+    oneshot
+
+# ZRAM
 on property:sys.boot_completed=1
-    write /sys/block/zram0/comp_algorithm lz4
-    write /sys/block/zram0/disk_size 1073741824
-    exec u:r:system_server:s0 -- /system/bin/sh -c "mkswap /dev/block/zram0 && swapon /dev/block/zram0"
+    write /proc/sys/vm/swappiness 60
+
+# Web file manager service
+service pulsaros-webserver /system/bin/sh /vendor/bin/pulsaros-webserver.sh
+    class late_start
+    user root
+    group root
+    disabled
+    oneshot

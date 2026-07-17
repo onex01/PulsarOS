@@ -1,0 +1,37 @@
+// PulsarOS Prebuilt Apps and Cores
+// SPDX-License-Identifier: MIT
+// APK files are placed here manually before build.
+// Run: ./scripts/download-apks.sh or build from source
+
+// ── Prebuilt APKs ──────────────────────────────────────────────────────────
+android_app_import {
+    name: "RetroArch",
+    apk: "RetroArch.apk",
+    privileged: true,
+    certificate: "platform",
+}
+
+android_app_import {
+    name: "Daijishou",
+    apk: "Daijishou.apk",
+    privileged: true,
+    certificate: "platform",
+}
+
+android_app_import {
+    name: "Kodi",
+    apk: "Kodi.apk",
+    privileged: true,
+    certificate: "platform",
+}
+
+android_app_import {
+    name: "TVBro",
+    apk: "TVBro.apk",
+    privileged: true,
+    certificate: "platform",
+}
+
+// ── Libretro Cores ──────────────────────────────────────────────────────────
+// Core .so files are in ../cores/ directory.
+// Installed to device by RetroArch or storage-watcher script.

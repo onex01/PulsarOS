@@ -1,7 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="pulsar_bg">#0B0C10</color>
-    <color name="pulsar_accent">#66FCF1</color>
-    <color name="pulsar_text">#FFFFFF</color>
-    <color name="pulsar_text_secondary">#A8B2D1</color>
+    <color name="pulsar_bg">#1A1A2E</color>
+    <color name="pulsar_surface">#16213E</color>
+    <color name="pulsar_accent">#E94560</color>
+    <color name="pulsar_accent_soft">#C81E45</color>
+    <color name="pulsar_text">#EAEAEA</color>
+    <color name="pulsar_text_secondary">#8892A0</color>
+    <color name="pulsar_success">#4CAF50</color>
+    <color name="pulsar_warning">#FF9800</color>
+    <color name="pulsar_card_bg">#1E2A45</color>
+    <color name="pulsar_divider">#2A3550</color>
 </resources>

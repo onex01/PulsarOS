@@ -33,9 +33,9 @@
         </receiver>
 
         <activity
-            android:name=".SetupActivity"
+            android:name=".SplashActivity"
             android:exported="true"
-            android:theme="@style/Theme.PulsarSetup.NoActionBar"
+            android:theme="@style/Theme.PulsarSetup.Splash"
             android:screenOrientation="landscape"
             android:launchMode="singleTask">
             <intent-filter>
@@ -44,6 +44,14 @@
                 <category android:name="android.intent.category.DEFAULT"/>
             </intent-filter>
         </activity>
+
+        <activity
+            android:name=".SetupActivity"
+            android:exported="true"
+            android:theme="@style/Theme.PulsarSetup.NoActionBar"
+            android:screenOrientation="landscape"
+            android:launchMode="singleTask"/>
+
 
         <activity
             android:name=".LicenseWarningActivity"

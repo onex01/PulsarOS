@@ -2,8 +2,10 @@
 <resources>
     <style name="Theme.PulsarSetup" parent="Theme.MaterialComponents.DayNight.NoActionBar">
         <item name="colorPrimary">@color/pulsar_accent</item>
-        <item name="colorPrimaryVariant">@color/pulsar_accent</item>
+        <item name="colorPrimaryVariant">@color/pulsar_accent_soft</item>
+        <item name="colorSecondary">@color/pulsar_accent</item>
         <item name="android:windowBackground">@color/pulsar_bg</item>
+        <item name="android:textColor">@color/pulsar_text</item>
     </style>
     <style name="Theme.PulsarSetup.NoActionBar" parent="Theme.PulsarSetup">
         <item name="windowNoTitle">true</item>
@@ -11,5 +13,13 @@
     </style>
     <style name="Theme.PulsarSetup.Dialog" parent="Theme.MaterialComponents.Dialog.Alert">
         <item name="colorPrimary">@color/pulsar_accent</item>
+        <item name="android:background">@color/pulsar_card_bg</item>
+        <item name="android:textColor">@color/pulsar_text</item>
+    </style>
+    <style name="Theme.PulsarSetup.Splash" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="android:windowBackground">@color/pulsar_bg</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="windowNoTitle">true</item>
+        <item name="windowActionBar">false</item>
     </style>
 </resources>
