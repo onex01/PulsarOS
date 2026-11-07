@@ -1,59 +1,24 @@
-# Build outputs
+# Build artefacts — never commit images or extracted partitions
+work/
 out/
-out-*/
-**/build/
-**/bin/
-**/gen/
-*.apk
-vendor/pulsaros/prebuilt/apk/*.apk
+stock/
 *.img
-*.zip
-*.so
+*.img.xz
+*.fex
+*.sparse
 
-# Prebuilt cores (downloaded, not tracked)
-vendor/pulsaros/prebuilt/cores/*.so
+# Downloaded, not tracked
+prebuilt/apk/*.apk
+prebuilt/cores/*.so
+prebuilt/cores/*.zip
+tools/bin/
 
-# IDE
+# IDE / OS
 .idea/
-*.iml
 .vscode/
 *.swp
-*~
-.project
-.classpath
-.settings/
-
-# OS
 .DS_Store
-Thumbs.db
-.directory
-
-# Logs & temp
-*.log
-logs/
-*.tmp
-.cache/
-
-# Local config
-local.conf
-build.env
-.userconfig
 
 # Python
 __pycache__/
-*.py[cod]
-.venv/
-
-# ccache
-.ccache/
-
-# Keystore
-*.keystore
-*.jks
-
-# Code history
-.history/
-
-# AI agent
-.mimocode/
-.kilo/
+*.pyc
