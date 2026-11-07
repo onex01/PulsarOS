@@ -123,6 +123,20 @@ inject_system() {
     if [[ $WITH_APK -eq 1 ]]; then
         place "$REPO_DIR/prebuilt/apk/Daijishou.apk"  "$m/system/app/Daijishou/Daijishou.apk"
         place "$REPO_DIR/prebuilt/apk/RetroArch.apk"  "$m/system/app/RetroArch/RetroArch.apk"
+        # Нативные библиотеки системного APK не распаковываются в /data, и
+        # RetroArch падает с "dlopen failed: libretroarch-activity.so not
+        # found". Для предустановленных приложений их кладут в lib/arm.
+        local libdir="$m/system/app/RetroArch/lib/arm"
+        if [[ -f "$REPO_DIR/prebuilt/apk/RetroArch.apk" ]]; then
+            mkdir -p "$libdir"
+            if unzip -o -q -j "$REPO_DIR/prebuilt/apk/RetroArch.apk" \
+                    'lib/armeabi-v7a/*.so' -d "$libdir"; then
+                chmod 755 "$libdir"/*.so 2>/dev/null || true
+                echo "   RetroArch libs: $(ls "$libdir" | wc -l)"
+            else
+                warn "не удалось распаковать библиотеки RetroArch"
+            fi
+        fi
         echo "   APK: Daijishou, RetroArch"
     fi
 
