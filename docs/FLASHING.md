@@ -22,14 +22,21 @@ http://nskhuman.ru/allwinner/card/phoenixcard433rus.zip
 #### Steps:
 1. Extract PhoenixCard from zip
 2. Run `phoenixcard.exe`
-3. Click **Image** button, select `PulsarOS-OPiZero3-Android12-*.img`
+3. Click **Image** button, select `PulsarOS-*.img`
 4. Select your SD card from the dropdown
-5. **Select mode "Product"** (NOT "StartUp"!)
+5. Mode: **StartUp** (启动卡)
 6. Click **Burn** (Записать)
 7. Wait for completion
 8. Remove SD card
 
-**⚠️ WARNING**: PhoenixCard 4.2.8 defaults to "StartUp" mode for Android 12. StartUp does NOT create a partition table — the board will not boot! Always select **Product** mode.
+**Про режим — в репозитории было противоречие.** `FLASHING.md` требовал
+«Product», а `SESSION-HANDOFF.md` сообщал, что стоковый образ грузится
+только в «StartUp», а «Product» на этой плате не работает. Проверено на
+стоковой прошивке было именно **StartUp**, поэтому начинайте с него.
+
+Если карта не грузится — попробуйте «Product», но это менее вероятный путь:
+в режиме StartUp PhoenixCard создаёт таблицу разделов, без которой плата
+не стартует.
 
 ### Method 2: Linux dd (Experimental)
 

@@ -1,0 +1,18 @@
+# PulsarOS — Nintendo Switch Online N64 controller
+key 0x130    BUTTON_B
+key 0x131    BUTTON_A
+key 0x133    BUTTON_Y
+key 0x134    BUTTON_X
+key 0x136    BUTTON_L1
+key 0x137    BUTTON_R1
+key 0x138    BUTTON_L2
+key 0x139    BUTTON_R2
+key 0x13a    BUTTON_SELECT
+key 0x13b    BUTTON_START
+key 0x13c    HOME
+axis 0x00    X
+axis 0x01    Y
+axis 0x02    Z
+axis 0x03    RZ
+axis 0x10    HAT_X
+axis 0x11    HAT_Y
