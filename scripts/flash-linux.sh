@@ -82,17 +82,43 @@ DATA_END=$(python3 -c "import json;print(json.load(open('$WORK/plan.json'))['dat
 # The GPT is generated for the real card size, because the backup header lives
 # in the last sectors.
 CARD_SECTORS=$(blockdev --getsz "$DEV")
-log "Генерирую GPT под размер карты"
-python3 - "$WORK" "$CARD_SECTORS" "$REPO_DIR" <<'PY'
+
+# Таблица должна лежать в LBA 2: u-boot этого образа не уважает поле
+# partition_entry_lba и читает записи сразу за заголовком. При 128 записях
+# они занимают LBA 2..33 и налезают на boot0 (сектор 16), поэтому число
+# записей уменьшается ровно настолько, чтобы закончиться до boot0.
+BOOT0_SECTOR=$(( $(awk -F'\t' '$2=="boot0_sdcard"{print $3}' "$WORK/plan.tsv") / 512 ))
+MAX_ENTRIES=$(( (BOOT0_SECTOR - 2) * 512 / 128 ))
+ENTRIES_COUNT=$(awk -F'\t' '$1=="partition"{n++} END{print n}' "$WORK/plan.tsv")
+[[ $ENTRIES_COUNT -gt $MAX_ENTRIES ]] && ENTRIES_COUNT=$MAX_ENTRIES
+
+log "Генерирую GPT: LBA 2, $ENTRIES_COUNT записей (до boot0 на секторе $BOOT0_SECTOR)"
+python3 - "$WORK" "$CARD_SECTORS" "$REPO_DIR" "$ENTRIES_COUNT" <<'PY'
 import json, os, subprocess, sys
-work, sectors, repo = sys.argv[1], int(sys.argv[2]), sys.argv[3]
+work, sectors, repo, count = sys.argv[1], int(sys.argv[2]), sys.argv[3], int(sys.argv[4])
 plan = json.load(open(os.path.join(work, "plan.json")))
 args = ["python3", os.path.join(repo, "tools", "mkgpt.py"),
-        "--disk-sectors", str(sectors), "--out", os.path.join(work, "gpt.bin")]
+        "--disk-sectors", str(sectors), "--entries-lba", "2",
+        "--entries-count", str(count),
+        "--out", os.path.join(work, "gpt.bin")]
+ends = []
 for e in plan["entries"]:
     if e["kind"] != "partition" or e["size"] <= 0:
         continue
-    args += ["--part", "%s:%d:%d" % (e["name"], e["offset"] // 512, e["size"] // 512)]
+    start = e["offset"] // 512
+    size = e["size"] // 512
+    args += ["--part", "%s:%d:%d" % (e["name"], start, size)]
+    ends.append(start + size)
+
+# UDISK в MBR имеет размер 0, поэтому в план он не попал. Без раздела
+# userdata Android не создаст /data: и u-boot, и fstab ищут именно это имя.
+# Отдаём ему всё до резервной копии GPT.
+if ends:
+    udisk_start = max(ends)
+    udisk_size = sectors - udisk_start - 64
+    if udisk_size > 0:
+        args += ["--part", "userdata:%d:%d" % (udisk_start, udisk_size)]
+        print("  userdata: %d + %d секторов" % (udisk_start, udisk_size))
 subprocess.run(args, check=True)
 PY
 
@@ -127,8 +153,10 @@ verify_at() { # verify_at <offset> <file> <label> [limit]
 
 verify_all() {
     fail=0
-    # GPT: заголовок в LBA1 плюс таблица разделов, всё вместе в gpt.bin.
-    verify_at 0 "$WORK/gpt.bin" "GPT (protective MBR + header + entries)"
+    # gpt.bin содержит дыру между заголовком и таблицей — в неё пишется
+    # boot0, поэтому проверять файл целиком нельзя. Сверяем две области:
+    # protective MBR + заголовок (LBA 0..1) и саму таблицу.
+    verify_at 0 "$WORK/gpt.bin" "GPT (LBA 0..1 + entries)"
     while IFS=$'\t' read -r kind name off size src; do
         [[ "$src" == "-" ]] && continue
         extract "$src" "$WORK/$src"

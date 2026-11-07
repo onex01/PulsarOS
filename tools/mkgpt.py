@@ -35,7 +35,6 @@ SECTOR = 512
 ENTRY_COUNT = 128
 ENTRY_SIZE = 128
 ENTRIES_LBA = 2
-ENTRIES_SECTORS = ENTRY_COUNT * ENTRY_SIZE // SECTOR
 
 # Microsoft basic data. Every Allwinner Android partition uses it, including
 # the ones Android later mounts as ext4 or f2fs.
@@ -51,8 +50,8 @@ def part_guid(name):
     return uuid.uuid5(GUID_NAMESPACE, name)
 
 
-def build_entries(parts, first_usable, last_usable):
-    entries = bytearray(ENTRY_COUNT * ENTRY_SIZE)
+def build_entries(parts, first_usable, last_usable, count):
+    entries = bytearray(count * ENTRY_SIZE)
     for i, (name, start, size) in enumerate(parts):
         if size <= 0:
             continue
@@ -67,7 +66,7 @@ def build_entries(parts, first_usable, last_usable):
 
 
 def build_header(my_lba, alt_lba, first_usable, last_usable,
-                 disk_guid, entries_crc, entries_lba):
+                 disk_guid, entries_crc, entries_lba, count):
     header = bytearray(92)
     header[0:8] = b"EFI PART"
     struct.pack_into("<I", header, 8, 0x00010000)          # revision
@@ -78,7 +77,7 @@ def build_header(my_lba, alt_lba, first_usable, last_usable,
     struct.pack_into("<Q", header, 48, last_usable)
     header[56:72] = disk_guid.bytes_le
     struct.pack_into("<Q", header, 72, entries_lba)
-    struct.pack_into("<I", header, 80, ENTRY_COUNT)
+    struct.pack_into("<I", header, 80, count)
     struct.pack_into("<I", header, 84, ENTRY_SIZE)
     struct.pack_into("<I", header, 88, entries_crc)
     crc = binascii.crc32(bytes(header)) & 0xFFFFFFFF
@@ -86,9 +85,10 @@ def build_header(my_lba, alt_lba, first_usable, last_usable,
     return bytes(header)
 
 
-def build(disk_sectors, parts, disk_guid):
-    first_usable = ENTRIES_LBA + ENTRIES_SECTORS
-    last_usable = disk_sectors - ENTRIES_SECTORS - 2
+def build(disk_sectors, parts, disk_guid, entries_lba=ENTRIES_LBA, count=ENTRY_COUNT):
+    entries_sectors = count * ENTRY_SIZE // SECTOR
+    first_usable = entries_lba + entries_sectors
+    last_usable = disk_sectors - entries_sectors - 2
 
     # The last partition (userdata) is sized to the end of the card, which
     # would overlap the backup GPT. Clamp every partition to last_usable.
@@ -101,7 +101,9 @@ def build(disk_sectors, parts, disk_guid):
         clamped.append((name, start, size))
     parts = clamped
 
-    entries = build_entries(parts, first_usable, last_usable)
+    if len(parts) > count:
+        raise SystemExit(f"разделов {len(parts)} больше, чем записей {count}")
+    entries = build_entries(parts, first_usable, last_usable, count)
     entries_crc = binascii.crc32(entries) & 0xFFFFFFFF
 
     # Protective MBR
@@ -117,14 +119,19 @@ def build(disk_sectors, parts, disk_guid):
     mbr[510:512] = b"\x55\xaa"
 
     primary_header = build_header(1, disk_sectors - 1, first_usable,
-                                  last_usable, disk_guid, entries_crc, ENTRIES_LBA)
-    backup_entries_lba = disk_sectors - ENTRIES_SECTORS - 1
+                                  last_usable, disk_guid, entries_crc, entries_lba, count)
+    backup_entries_lba = disk_sectors - entries_sectors - 1
     backup_header = build_header(disk_sectors - 1, 1, first_usable,
-                                 last_usable, disk_guid, entries_crc, backup_entries_lba)
+                                 last_usable, disk_guid, entries_crc, backup_entries_lba, count)
 
+    # Entries do not have to sit at LBA 2. Allwinner writes boot0 at sector 16,
+    # which would land inside the default entries area (LBA 2..33) and destroy
+    # the table. The header records where they really are, so put them after
+    # boot0 when asked.
     out = bytearray()
     out += mbr
     out += primary_header + b"\x00" * (SECTOR - len(primary_header))
+    out += b"\x00" * ((entries_lba - ENTRIES_LBA) * SECTOR)
     out += entries
     return bytes(out), bytes(backup_header), entries, backup_entries_lba, disk_sectors - 1
 
@@ -136,6 +143,10 @@ def main():
                     metavar="NAME:START:SIZE")
     ap.add_argument("--out", required=True)
     ap.add_argument("--guid", default=None)
+    ap.add_argument("--entries-lba", type=int, default=ENTRIES_LBA,
+                    help="LBA записи таблицы; должен не пересекаться с boot0")
+    ap.add_argument("--entries-count", type=int, default=ENTRY_COUNT,
+                    help="число записей; меньше 128 экономит место под boot0")
     args = ap.parse_args()
 
     parts = []
@@ -147,7 +158,7 @@ def main():
     disk_guid = uuid.UUID(args.guid) if args.guid else part_guid("pulsaros-disk")
 
     head, backup_header, entries, backup_entries_lba, backup_header_lba = build(
-        args.disk_sectors, parts, disk_guid)
+        args.disk_sectors, parts, disk_guid, args.entries_lba, args.entries_count)
 
     with open(args.out, "wb") as f:
         f.write(head)
