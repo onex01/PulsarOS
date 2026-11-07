@@ -56,7 +56,9 @@ if [[ "$REMOVABLE" != "1" && "$TRAN" != "usb" ]]; then
     die "$DEV не выглядит съёмным (rm=$REMOVABLE, transport=${TRAN:-?})"
 fi
 
-WORK="$(mktemp -d /tmp/pulsaros-flash.XXXXXX)"
+# На диске, а не в /tmp: развёрнутый super занимает 3 ГБ, а /tmp обычно tmpfs.
+mkdir -p "$REPO_DIR/work"
+WORK="$(mktemp -d "$REPO_DIR/work/flash.XXXXXX")"
 trap 'rm -rf "$WORK"' EXIT
 
 # ── План ────────────────────────────────────────────────────────────────────
@@ -89,7 +91,9 @@ CARD_SECTORS=$(blockdev --getsz "$DEV")
 # записей уменьшается ровно настолько, чтобы закончиться до boot0.
 BOOT0_SECTOR=$(( $(awk -F'\t' '$2=="boot0_sdcard"{print $3}' "$WORK/plan.tsv") / 512 ))
 MAX_ENTRIES=$(( (BOOT0_SECTOR - 2) * 512 / 128 ))
-ENTRIES_COUNT=$(awk -F'\t' '$1=="partition"{n++} END{print n}' "$WORK/plan.tsv")
+# +1: userdata в plan.tsv нет (в MBR у UDISK размер 0), его добавляет
+# генератор ниже.
+ENTRIES_COUNT=$(( $(awk -F'\t' '$1=="partition"{n++} END{print n+0}' "$WORK/plan.tsv") + 1 ))
 [[ $ENTRIES_COUNT -gt $MAX_ENTRIES ]] && ENTRIES_COUNT=$MAX_ENTRIES
 
 log "Генерирую GPT: LBA 2, $ENTRIES_COUNT записей (до boot0 на секторе $BOOT0_SECTOR)"
@@ -138,6 +142,27 @@ extract() { # extract <section> <out>
     [[ -f "$2" ]] || python3 "$REPO_DIR/tools/imagewty.py" extract "$IMG" "$1" "$2" >/dev/null
 }
 
+# super.fex в прошивке — Android sparse image, а в разделе на карте Android
+# ждёт обычный (raw) образ: init читает LP-геометрию по смещению 4096, а там
+# у sparse лежит его собственный заголовок, и загрузка падает с
+# "liblp: invalid geometry magic signature". PhoenixCard разворачивает его при
+# записи, поэтому делаем то же.
+prepare_source() { # prepare_source <file> -> печатает путь к пригодному файлу
+    local f="$1"
+    local magic
+    magic=$(head -c 4 "$f" | od -An -t x1 | tr -d ' \n')
+    if [[ "$magic" == "3aff26ed" ]]; then
+        local out="${f%.*}.raw"
+        if [[ ! -f "$out" ]]; then
+            python3 "$REPO_DIR/tools/sparse.py" unsparse "$f" "$out" >/dev/null \
+                || die "не удалось развернуть $f"
+        fi
+        printf '%s\n' "$out"
+    else
+        printf '%s\n' "$f"
+    fi
+}
+
 # ── Проверка ────────────────────────────────────────────────────────────────
 fail=0
 verify_at() { # verify_at <offset> <file> <label> [limit]
@@ -159,8 +184,11 @@ verify_all() {
     verify_at 0 "$WORK/gpt.bin" "GPT (LBA 0..1 + entries)"
     while IFS=$'\t' read -r kind name off size src; do
         [[ "$src" == "-" ]] && continue
+        if [[ "$name" == "metadata" ]]; then
+            continue   # отформатирован заново, с образом не совпадает
+        fi
         extract "$src" "$WORK/$src"
-        verify_at "$off" "$WORK/$src" "$name"
+        verify_at "$off" "$(prepare_source "$WORK/$src")" "$name"
     done < "$WORK/plan.tsv"
 }
 
@@ -212,7 +240,15 @@ while IFS=$'\t' read -r kind name off size src; do
     [[ "$src" == "-" ]] && continue
     [[ "$kind" == "partition" ]] || continue
     extract "$src" "$WORK/$src"
-    wr "$WORK/$src" "$off" "$name"
+    # metadata Android ждёт как ext4: пустой раздел он не монтирует на
+    # first_stage_mount ("VFS: Can't find ext4 filesystem"), поэтому создаём ФС.
+    if [[ "$name" == "metadata" ]]; then
+        truncate -s "$size" "$WORK/metadata.img"
+        mkfs.ext4 -q -F "$WORK/metadata.img" >/dev/null 2>&1 || warn "mkfs.ext4 для metadata не удался"
+        wr "$WORK/metadata.img" "$off" "$name"
+        continue
+    fi
+    wr "$(prepare_source "$WORK/$src")" "$off" "$name"
 done < "$WORK/plan.tsv"
 
 # загрузчики пишем последними: boot0 и boot_package лежат в промежутке,
