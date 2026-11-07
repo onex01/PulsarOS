@@ -71,26 +71,29 @@ import json, os, sys
 work = sys.argv[1]
 plan = json.load(open(os.path.join(work, "plan.json")))
 plan["disk_sectors"] = int(sys.argv[2])
+# userdata в MBR нет (у UDISK размер 0), а boot-resource нужен u-boot.
+# Считаем оба один раз и пишем и в plan.tsv, и в GPT — иначе таблица и
+# запись расходятся, и userdata перекрывает boot-resource.
+ends = [e["offset"] // 512 + e["size"] // 512
+        for e in plan["entries"] if e["kind"] == "partition" and e["size"] > 0]
+derived_parts = []
+if ends:
+    start = max(ends)
+    LOGO = 65536                      # 32 МиБ под FAT с логотипом
+    derived_parts.append(("boot-resource", start, LOGO))
+    start += LOGO
+    size = plan["disk_sectors"] - start - 64
+    if size > 0:
+        derived_parts.append(("userdata", start, size))
+
 with open(os.path.join(work, "plan.tsv"), "w") as f:
-    ends = []
     for e in plan["entries"]:
         f.write(f"{e['kind']}\t{e['name']}\t{e['offset']}\t{e['size']}\t{e['source'] or '-'}\n")
-        if e["kind"] == "partition" and e["size"] > 0:
-            ends.append(e["offset"] // 512 + e["size"] // 512)
-    # userdata в MBR отсутствует (у UDISK размер 0) — добавляем тем же
-    # правилом, что и в GPT: от конца Reserve0 до резервной копии.
-    if ends:
-        start = max(ends)
-        # u-boot ищет раздел с именем ровно "boot-resource" (sunxi_flash
-        # sprite logic). Не найдя его, он перезаписывает начало
-        # bootloader_a защитным MBR и GPT — вместе с FAT и логотипом.
-        # Отдаём ему 32 МиБ, вырезанные из начала userdata.
-        LOGO = 65536
-        f.write(f"partition\tboot-resource\t{start * 512}\t{LOGO * 512}\t-\n")
-        start += LOGO
-        size = plan["disk_sectors"] - start - 64
-        if size > 0:
-            f.write(f"partition\tuserdata\t{start * 512}\t{size * 512}\t-\n")
+    for name, start, size in derived_parts:
+        f.write(f"partition\t{name}\t{start * 512}\t{size * 512}\t-\n")
+
+with open(os.path.join(work, "derived.json"), "w") as f:
+    json.dump([{"name": n, "start": s, "size": z} for n, s, z in derived_parts], f)
 PY
 
 CARD_BOOT=$(python3 -c "import json;print(json.load(open('$WORK/plan.json'))['card_boot_sector'])")
@@ -108,10 +111,15 @@ CARD_SECTORS=$(blockdev --getsz "$DEV")
 # они занимают LBA 2..33 и налезают на boot0 (сектор 16), поэтому число
 # записей уменьшается ровно настолько, чтобы закончиться до boot0.
 BOOT0_SECTOR=$(( $(awk -F'\t' '$2=="boot0_sdcard"{print $3}' "$WORK/plan.tsv") / 512 ))
+# 26 записей по 128 байт = 3328 байт = 6.5 сектора, то есть LBA 2..8.
+# С boot0 на секторе 16 помещается до (16-2)*4 = 56 записей.
 MAX_ENTRIES=$(( (BOOT0_SECTOR - 2) * 512 / 128 ))
 # +1: userdata в plan.tsv нет (в MBR у UDISK размер 0), его добавляет
 # генератор ниже.
-ENTRIES_COUNT=$(( $(awk -F'\t' '$1=="partition"{n++} END{print n+0}' "$WORK/plan.tsv") + 1 ))
+# +2: userdata и boot-resource появляются только в plan.tsv, в MBR их нет.
+# plan.tsv уже содержит userdata и boot-resource (их дописывает генератор
+# выше), поэтому считаем все partition-строки как есть.
+ENTRIES_COUNT=$(awk -F'\t' '$1=="partition"{n++} END{print n+0}' "$WORK/plan.tsv")
 [[ $ENTRIES_COUNT -gt $MAX_ENTRIES ]] && ENTRIES_COUNT=$MAX_ENTRIES
 
 log "Генерирую GPT: LBA 2, $ENTRIES_COUNT записей (до boot0 на секторе $BOOT0_SECTOR)"
@@ -123,24 +131,16 @@ args = ["python3", os.path.join(repo, "tools", "mkgpt.py"),
         "--disk-sectors", str(sectors), "--entries-lba", "2",
         "--entries-count", str(count),
         "--out", os.path.join(work, "gpt.bin")]
-ends = []
 for e in plan["entries"]:
     if e["kind"] != "partition" or e["size"] <= 0:
         continue
-    start = e["offset"] // 512
-    size = e["size"] // 512
-    args += ["--part", "%s:%d:%d" % (e["name"], start, size)]
-    ends.append(start + size)
+    args += ["--part", "%s:%d:%d" % (e["name"], e["offset"] // 512, e["size"] // 512)]
 
-# UDISK в MBR имеет размер 0, поэтому в план он не попал. Без раздела
-# userdata Android не создаст /data: и u-boot, и fstab ищут именно это имя.
-# Отдаём ему всё до резервной копии GPT.
-if ends:
-    udisk_start = max(ends)
-    udisk_size = sectors - udisk_start - 64
-    if udisk_size > 0:
-        args += ["--part", "userdata:%d:%d" % (udisk_start, udisk_size)]
-        print("  userdata: %d + %d секторов" % (udisk_start, udisk_size))
+# Те же derived-разделы, что и в plan.tsv: иначе GPT и запись расходятся.
+derived = json.load(open(os.path.join(work, "derived.json")))
+for d in derived:
+    args += ["--part", "%s:%d:%d" % (d["name"], d["start"], d["size"])]
+    print("  %s: %d + %d секторов" % (d["name"], d["start"], d["size"]))
 subprocess.run(args, check=True)
 PY
 
