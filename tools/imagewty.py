@@ -192,6 +192,72 @@ def cmd_info(args):
     return 0
 
 
+def repack(image_path, replacements, out_path, align=1024):
+    """Build a new IMAGEWTY with sections laid out sequentially.
+
+    Needed because super.fex has only 352 bytes of slack before the next
+    section: as soon as the payload grows, every following offset has to move.
+    Header and table metadata are preserved; only offsets, sizes and the total
+    file size are recomputed.
+    """
+    img = ImageWTY(image_path)
+
+    with open(image_path, "rb") as f:
+        head = bytearray(f.read(DATA_START))
+
+    payloads = []
+    for sec in img.sections:
+        name = sec["name"]
+        if name in replacements:
+            with open(replacements[name], "rb") as f:
+                data = f.read()
+        else:
+            data = img.read_section(name)
+        payloads.append((sec, data))
+
+    cursor = DATA_START
+    layout = []
+    for sec, data in payloads:
+        cursor = (cursor + align - 1) // align * align
+        layout.append((sec, data, cursor))
+        cursor += len(data)
+
+    total = cursor
+    if total > 0xFFFFFFFF:
+        raise ValueError("image would exceed the 32-bit size field")
+
+    struct.pack_into("<I", head, 0x18, total)
+
+    with open(out_path, "wb") as out:
+        out.write(head)
+        out.truncate(total)
+        for sec, data, offset in layout:
+            entry_off = img.table_offset + sec["index"] * img.entry_size
+            out.seek(entry_off + 0x124)
+            out.write(struct.pack("<I", len(data)))
+            out.seek(entry_off + 0x134)
+            out.write(struct.pack("<I", offset))
+            out.seek(offset)
+            out.write(data)
+
+    return total, layout
+
+
+def cmd_repack(args):
+    replacements = {}
+    for item in args.replace or []:
+        name, _, path = item.partition("=")
+        if not path:
+            raise SystemExit(f"--replace needs section=file, got {item!r}")
+        replacements[name] = path
+    total, layout = repack(args.image, replacements, args.out)
+    print(f"repacked -> {args.out}: {total:,} bytes")
+    for sec, data, offset in layout:
+        mark = " *" if sec["name"] in replacements else ""
+        print(f"  {sec['name']:22s} {offset:>13,} {len(data):>13,}{mark}")
+    return 0
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -211,6 +277,11 @@ def main():
     p = sub.add_parser("info")
     p.add_argument("image"); p.add_argument("section")
     p.set_defaults(func=cmd_info)
+
+    p = sub.add_parser("repack")
+    p.add_argument("image"); p.add_argument("out")
+    p.add_argument("--replace", action="append", metavar="SECTION=FILE")
+    p.set_defaults(func=cmd_repack)
 
     args = ap.parse_args()
     return args.func(args)
