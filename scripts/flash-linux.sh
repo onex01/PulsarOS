@@ -183,10 +183,17 @@ verify_all() {
     # protective MBR + заголовок (LBA 0..1) и саму таблицу.
     verify_at 0 "$WORK/gpt.bin" "GPT (LBA 0..1 + entries)"
     while IFS=$'\t' read -r kind name off size src; do
-        [[ "$src" == "-" ]] && continue
+        # metadata форматируется заново, с образом он не совпадёт — проверяем
+        # отдельно, что на карте действительно ext4.
         if [[ "$name" == "metadata" ]]; then
-            continue   # отформатирован заново, с образом не совпадает
+            local magic
+            magic=$(dd if="$DEV" bs=1 iflag=skip_bytes,count_bytes skip=$(( off + 1080 )) \
+                    count=2 status=none | od -An -t x1 | tr -d ' \n')
+            if [[ "$magic" == "53ef" ]]; then ok "metadata: ext4"
+            else printf '\033[31m  FAIL metadata: не ext4 (%s)\033[0m\n' "$magic"; fail=$((fail+1)); fi
+            continue
         fi
+        [[ "$src" == "-" ]] && continue
         extract "$src" "$WORK/$src"
         verify_at "$off" "$(prepare_source "$WORK/$src")" "$name"
     done < "$WORK/plan.tsv"
@@ -237,17 +244,22 @@ BACKUP_LBA=$(( CARD_SECTORS - 33 ))
 wr "$WORK/gpt.bin.backup" $(( BACKUP_LBA * 512 )) "GPT backup"
 
 while IFS=$'\t' read -r kind name off size src; do
-    [[ "$src" == "-" ]] && continue
     [[ "$kind" == "partition" ]] || continue
-    extract "$src" "$WORK/$src"
+
     # metadata Android ждёт как ext4: пустой раздел он не монтирует на
-    # first_stage_mount ("VFS: Can't find ext4 filesystem"), поэтому создаём ФС.
+    # first_stage_mount ("VFS: Can't find ext4 filesystem"). В образе файла
+    # для него нет (src="-"), поэтому создаём ФС здесь. Проверка src должна
+    # идти после этой ветки, иначе раздел просто пропускается.
     if [[ "$name" == "metadata" ]]; then
         truncate -s "$size" "$WORK/metadata.img"
-        mkfs.ext4 -q -F "$WORK/metadata.img" >/dev/null 2>&1 || warn "mkfs.ext4 для metadata не удался"
+        mkfs.ext4 -q -F "$WORK/metadata.img" >/dev/null 2>&1 \
+            || die "mkfs.ext4 для metadata не удался"
         wr "$WORK/metadata.img" "$off" "$name"
         continue
     fi
+
+    [[ "$src" == "-" ]] && continue
+    extract "$src" "$WORK/$src"
     wr "$(prepare_source "$WORK/$src")" "$off" "$name"
 done < "$WORK/plan.tsv"
 
