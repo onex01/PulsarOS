@@ -73,7 +73,10 @@ fi
 # ── 3. Расширение разделов ──────────────────────────────────────────────────
 # Свободное место есть внутри самого super (3 ГБ на карте, занято ~1.06 ГБ),
 # поэтому таблицу разделов на карте трогать не нужно.
-declare -A TARGET_MIB=( [system_a]=1600 [product_a]=400 )
+# system_a: сток 782 МиБ + наши ядра/RetroArch ~476 МиБ + новые APK с
+# распакованными armv7-библиотеками (~580 МиБ) в 1600 МиБ не помещаются,
+# поэтому 2048 МиБ. Место внутри super для этого есть.
+declare -A TARGET_MIB=( [system_a]=2048 [product_a]=400 )
 
 for part in "${!TARGET_MIB[@]}"; do
     src="$WORK/parts/$part.img"
@@ -117,8 +120,99 @@ place() {
     setfattr -n security.selinux -v "$LABEL" "$dst" 2>/dev/null || true
 }
 
+# Приложения, которые просто кладутся в /system/app/<Каталог>/<Каталог>.apk.
+# Формат записи: "Каталог:файл в prebuilt/apk" — добавить приложение = одна
+# строка. Userspace только 32-битный (armeabi-v7a), поэтому нативные
+# библиотеки обязательны: для APK из /system Android их не распаковывает,
+# и приложение падает с "dlopen failed".
+SYSTEM_APPS=(
+    "VLC:VLC.apk"
+    "PPSSPP:PPSSPP.apk"
+    "DuckStation:DuckStation.apk"
+    "Mupen64PlusFZ:Mupen64PlusFZ.apk"
+    "Fennec:Fennec.apk"
+    "MaterialFiles:MaterialFiles.apk"
+    "PrimitiveFTPd:primftpd.apk"
+)
+
+# Стоковый мусор, который можно выкинуть. Отсутствующий каталог — не ошибка.
+DEBLOAT_SYSTEM=(
+    Test_AD wiringop AwlogSettings DragonAgingTV DragonAtt DragonBox EasterEgg
+    TimerSwitch Update WebScreensaver WallpaperBackup ImageParser Traceur
+    BasicDreams LiveWallpapersPicker ExactCalculator SoundRecorder
+)
+DEBLOAT_PRIVAPP=( Traceur )
+
+DEBLOAT_PRODUCT=( Camera2 Calendar DeskClock PhotoTable Browser2 )
+
+DEBLOAT_KB=0
+
+# drop_dirs <база> <каталог...>: удалить и напечатать, сколько освободилось.
+drop_dirs() {
+    local base="$1"; shift
+    local d path kb
+    for d in "$@"; do
+        path="$base/$d"
+        [[ -d "$path" ]] || continue
+        kb=$(du -sk "$path" | cut -f1)
+        rm -rf "$path"
+        DEBLOAT_KB=$(( DEBLOAT_KB + kb ))
+        printf '   - %s (%s МиБ)\n' "$d" "$(awk -v k="$kb" 'BEGIN{printf "%.1f", k/1024}')"
+    done
+}
+
+debloat_total_mib() {
+    awk -v k="$DEBLOAT_KB" 'BEGIN{printf "%.1f", k/1024}'
+}
+
+debloat_mib() {
+    awk -v k="$1" 'BEGIN{printf "%.1f", k/1024}'
+}
+
+# inject_apk <точка монтирования> <каталог> <apk>: APK + его armv7-библиотеки.
+inject_apk() {
+    local m="$1" dir="$2" apk="$3"
+    local src="$REPO_DIR/prebuilt/apk/$apk"
+    local dst="$m/system/app/$dir"
+    if [[ ! -f "$src" ]]; then
+        warn "нет $apk — $dir не установлен"
+        return
+    fi
+    place "$src" "$dst/$dir.apk"
+
+    # Библиотек может не быть вовсе (чистый Java/DEX) — это нормально.
+    # grep -c читает поток до конца: с pipefail `grep -q` рвёт unzip по
+    # SIGPIPE и проверка ложно срабатывает.
+    local n=0 nso
+    nso=$(unzip -l "$src" | grep -c 'lib/armeabi-v7a/.*\.so$' || true)
+    if [[ ${nso:-0} -gt 0 ]]; then
+        # Чистим каталог: при смене версии APK набор .so может уменьшиться,
+        # и старые библиотеки иначе останутся рядом с новыми.
+        rm -rf "$dst/lib/arm"
+        mkdir -p "$dst/lib/arm"
+        if unzip -o -q -j "$src" 'lib/armeabi-v7a/*.so' -d "$dst/lib/arm"; then
+            chmod 755 "$dst/lib/arm"/*.so
+            n=$(find "$dst/lib/arm" -maxdepth 1 -name '*.so' | wc -l)
+        else
+            warn "не удалось распаковать библиотеки $dir"
+        fi
+    fi
+    printf '   %-16s APK %6s МиБ, .so: %d\n' "$dir" \
+        "$(awk -v b="$(stat -c %s "$src")" 'BEGIN{printf "%.1f", b/1048576}')" "$n"
+}
+
 inject_system() {
     local m="$WORK/mnt-system_a"
+
+    echo "   Выкидываю стоковый мусор из /system/app"
+    local before=$DEBLOAT_KB
+    drop_dirs "$m/system/app" "${DEBLOAT_SYSTEM[@]}"
+    echo "   освобождено из /system/app: $(debloat_mib $((DEBLOAT_KB - before))) МиБ"
+
+    echo "   Выкидываю стоковый мусор из /system/priv-app"
+    before=$DEBLOAT_KB
+    drop_dirs "$m/system/priv-app" "${DEBLOAT_PRIVAPP[@]}"
+    echo "   освобождено из /system/priv-app: $(debloat_mib $((DEBLOAT_KB - before))) МиБ"
 
     if [[ $WITH_APK -eq 1 ]]; then
         place "$REPO_DIR/prebuilt/apk/Daijishou.apk"  "$m/system/app/Daijishou/Daijishou.apk"
@@ -138,6 +232,11 @@ inject_system() {
             fi
         fi
         echo "   APK: Daijishou, RetroArch"
+
+        local app
+        for app in "${SYSTEM_APPS[@]}"; do
+            inject_apk "$m" "${app%%:*}" "${app#*:}"
+        done
     fi
 
     if [[ $WITH_CORES -eq 1 ]] && compgen -G "$REPO_DIR/prebuilt/cores/*.so" >/dev/null; then
@@ -178,6 +277,12 @@ inject_system() {
 
 inject_product() {
     local m="$WORK/mnt-product_a"
+
+    echo "   Выкидываю стоковый мусор из /product/app"
+    local before=$DEBLOAT_KB
+    drop_dirs "$m/app" "${DEBLOAT_PRODUCT[@]}"
+    echo "   освобождено из /product/app: $(debloat_mib $((DEBLOAT_KB - before))) МиБ"
+
     if [[ -d "$REPO_DIR/overlay/product" ]]; then
         cp -a "$REPO_DIR/overlay/product/." "$m/" 2>/dev/null || true
     fi
@@ -187,6 +292,8 @@ log "system_a"
 inject_into "$WORK/parts/system_a.big.img" system_a inject_system
 log "product_a"
 inject_into "$WORK/parts/product_a.big.img" product_a inject_product
+
+echo "   debloat: всего освобождено $(debloat_total_mib) МиБ"
 
 # ── 5. Новый super ──────────────────────────────────────────────────────────
 log "Собираю super"
