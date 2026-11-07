@@ -61,13 +61,22 @@ sudo scripts/flash-linux.sh out/PulsarOS-*.img /dev/sdX --verify-only
 
 | Смещение | Что |
 | --- | --- |
-| 0 | `sunxi_mbr.fex` — таблица разделов Allwinner (`softw411`) |
+| 0 | GPT: protective MBR + заголовок + таблица разделов |
 | 8 КиБ | `boot0_sdcard.fex` — первичный загрузчик, BROM читает отсюда |
 | 16.79 МиБ (сектор 32800) | `boot_package.fex` — u-boot + optee + dtb |
 | 20 МиБ (сектор 40960) | boot-resource, env, boot, vendor_boot, super, misc, vbmeta*, dtbo |
-| 3444 МиБ | `UDISK` — будущий `/data`, Android форматирует при первом старте |
+| 3448 МиБ | `userdata` — будущий `/data`, Android форматирует при первом старте |
+| конец карты | резервная копия GPT (u-boot проверяет и её) |
 
 После записи скрипт сверяет sha256 каждого записанного участка с образом.
+
+**Таблица разделов — GPT, а не Allwinner MBR.** u-boot в этой прошивке
+разбирает разделы только через `part_get_info_efi`; с MBR он пишет
+`Invalid GPT` и не находит ни `env`, ни `boot`. Поэтому флешер пишет
+protective MBR + GPT (и резервную копию в конце карты), а имена разделов
+берёт из `sys_partition.fex` — их ждёт Android через
+`/dev/block/by-name/<name>`. Исключение: `UDISK` называется `userdata`,
+потому что так его ищут и u-boot, и fstab.
 
 **Смещения не угадываются.** Их берёт `tools/flashplan.py` из
 `cardscript.fex` — скрипта, который исполняет сам PhoenixCard:

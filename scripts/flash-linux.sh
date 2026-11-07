@@ -68,15 +68,33 @@ python3 - "$WORK" <<'PY'
 import json, os, sys
 work = sys.argv[1]
 plan = json.load(open(os.path.join(work, "plan.json")))
-open(os.path.join(work, "mbr.bin"), "wb").write(bytes.fromhex(plan["mbr_bytes"]))
 with open(os.path.join(work, "plan.tsv"), "w") as f:
     for e in plan["entries"]:
         f.write(f"{e['kind']}\t{e['name']}\t{e['offset']}\t{e['size']}\t{e['source'] or '-'}\n")
 PY
 
-CARD_BOOT=$(python3 -c "import json,sys;print(json.load(open('$WORK/plan.json'))['card_boot_sector'])")
+CARD_BOOT=$(python3 -c "import json;print(json.load(open('$WORK/plan.json'))['card_boot_sector'])")
 DELTA=$(python3 -c "import json,sys;print(json.load(open('$WORK/plan.json'))['mbr_delta_sectors'])")
-DATA_END=$(python3 -c "import json,sys;print(json.load(open('$WORK/plan.json'))['data_end'])")
+DATA_END=$(python3 -c "import json;print(json.load(open('$WORK/plan.json'))['data_end'])")
+
+# u-boot reads partitions with EFI GPT only, so the Allwinner MBR alone is not
+# enough: without a GPT it reports "Invalid GPT" and cannot find env or boot.
+# The GPT is generated for the real card size, because the backup header lives
+# in the last sectors.
+CARD_SECTORS=$(blockdev --getsz "$DEV")
+log "Генерирую GPT под размер карты"
+python3 - "$WORK" "$CARD_SECTORS" "$REPO_DIR" <<'PY'
+import json, os, subprocess, sys
+work, sectors, repo = sys.argv[1], int(sys.argv[2]), sys.argv[3]
+plan = json.load(open(os.path.join(work, "plan.json")))
+args = ["python3", os.path.join(repo, "tools", "mkgpt.py"),
+        "--disk-sectors", str(sectors), "--out", os.path.join(work, "gpt.bin")]
+for e in plan["entries"]:
+    if e["kind"] != "partition" or e["size"] <= 0:
+        continue
+    args += ["--part", "%s:%d:%d" % (e["name"], e["offset"] // 512, e["size"] // 512)]
+subprocess.run(args, check=True)
+PY
 
 printf '  %-18s %13s %13s  %s\n' "что" "смещение" "размер" "источник"
 while IFS=$'\t' read -r kind name off size src; do
@@ -109,9 +127,8 @@ verify_at() { # verify_at <offset> <file> <label> [limit]
 
 verify_all() {
     fail=0
-    # MBR: boot0 лежит на 8 КиБ внутри 64-килобайтного файла таблицы,
-    # поэтому сравниваем только значимую часть.
-    verify_at 0 "$WORK/mbr.bin" "sunxi_mbr (сдвинутый)" 8192
+    # GPT: заголовок в LBA1 плюс таблица разделов, всё вместе в gpt.bin.
+    verify_at 0 "$WORK/gpt.bin" "GPT (protective MBR + header + entries)"
     while IFS=$'\t' read -r kind name off size src; do
         [[ "$src" == "-" ]] && continue
         extract "$src" "$WORK/$src"
@@ -155,7 +172,13 @@ wr() { # wr <file> <offset> <label>
 }
 
 log "Пишу"
-wr "$WORK/mbr.bin" 0 "sunxi_mbr"
+# GPT: protective MBR + header + entries одним куском с LBA0.
+wr "$WORK/gpt.bin" 0 "GPT"
+
+# Резервная копия GPT в конце карты: u-boot проверяет и её, а без неё
+# ругается "Invalid Backup GPT".
+BACKUP_LBA=$(( CARD_SECTORS - 33 ))
+wr "$WORK/gpt.bin.backup" $(( BACKUP_LBA * 512 )) "GPT backup"
 
 while IFS=$'\t' read -r kind name off size src; do
     [[ "$src" == "-" ]] && continue
