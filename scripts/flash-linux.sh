@@ -81,6 +81,13 @@ with open(os.path.join(work, "plan.tsv"), "w") as f:
     # правилом, что и в GPT: от конца Reserve0 до резервной копии.
     if ends:
         start = max(ends)
+        # u-boot ищет раздел с именем ровно "boot-resource" (sunxi_flash
+        # sprite logic). Не найдя его, он перезаписывает начало
+        # bootloader_a защитным MBR и GPT — вместе с FAT и логотипом.
+        # Отдаём ему 32 МиБ, вырезанные из начала userdata.
+        LOGO = 65536
+        f.write(f"partition\tboot-resource\t{start * 512}\t{LOGO * 512}\t-\n")
+        start += LOGO
         size = plan["disk_sectors"] - start - 64
         if size > 0:
             f.write(f"partition\tuserdata\t{start * 512}\t{size * 512}\t-\n")
@@ -217,7 +224,7 @@ verify_all() {
                 else printf '\033[31m  FAIL userdata: не f2fs\033[0m\n'; fail=$((fail+1)); fi
                 continue
                 ;;
-            bootloader_a)
+            boot-resource)
                 # раздел должен быть читаемым FAT с нашим логотипом
                 if dd if="$DEV" bs=1M iflag=skip_bytes,count_bytes skip="$off" \
                         count="$size" status=none > "$WORK/br-check.fex" 2>/dev/null \
@@ -284,8 +291,8 @@ wr "$WORK/gpt.bin.backup" $(( BACKUP_LBA * 512 )) "GPT backup"
 derived() { # derived <name> <size> -> печатает путь к файлу
     local name="$1" size="$2" out="$WORK/derived-$1.img"
     case "$name" in
-        bootloader_a)
-            # u-boot читает bootlogo.bmp из этого раздела. В образе лежит
+        boot-resource)
+            # u-boot читает bootlogo.bmp именно из раздела с этим именем. В образе лежит
             # усечённый FAT (заявляет 128 МиБ при файле 5.6 МБ), который
             # u-boot не принимает: "Unrecognized filesystem type".
             if [[ ! -f "$out" ]]; then
