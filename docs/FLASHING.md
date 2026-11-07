@@ -63,21 +63,30 @@ sudo scripts/flash-linux.sh out/PulsarOS-*.img /dev/sdX --verify-only
 | --- | --- |
 | 0 | `sunxi_mbr.fex` — таблица разделов Allwinner (`softw411`) |
 | 8 КиБ | `boot0_sdcard.fex` — первичный загрузчик, BROM читает отсюда |
-| 128 КиБ | `boot_package.fex` — u-boot + optee + dtb |
-| по MBR | boot-resource, env, boot, vendor_boot, super, misc, vbmeta*, dtbo |
+| 16.79 МиБ (сектор 32800) | `boot_package.fex` — u-boot + optee + dtb |
+| 20 МиБ (сектор 40960) | boot-resource, env, boot, vendor_boot, super, misc, vbmeta*, dtbo |
 | 3444 МиБ | `UDISK` — будущий `/data`, Android форматирует при первом старте |
 
 После записи скрипт сверяет sha256 каждого записанного участка с образом.
 
-**Единственное место, которое не выводится из образа, — смещение
-`boot_package`.** В `boot0` есть таблица имён (`u-boot`, `optee`, `monitor`,
-`scp`, `dtb`, `dtbo`, `logo`), то есть он парсит именно `boot_package`, но
-самого смещения в файлах нет. По умолчанию 128 КиБ; если плата не
-загружается, попробуйте другое:
+**Смещения не угадываются.** Их берёт `tools/flashplan.py` из
+`cardscript.fex` — скрипта, который исполняет сам PhoenixCard:
 
-```bash
-sudo scripts/flash-linux.sh out/PulsarOS-*.img /dev/sdX --uboot-offset=1048576
 ```
+[boot_0_0]   start=16      boot0
+[boot_1_0]   start=32800   boot_package
+[card_boot]  start=40960   начало разделов
+```
+
+Из этого же следует, что `sunxi_mbr.fex` надо сдвигать: в нём первый раздел
+начинается с сектора 32768 (16 МиБ), а `boot_package` занимает
+32800–35328 (16.79–17.26 МиБ), то есть попал бы внутрь `bootloader_a`.
+Сдвиг = `card_boot` − первый раздел MBR = 8192 сектора (4 МиБ).
+
+Первая версия флешера писала `boot_package` на 128 КиБ и не сдвигала MBR —
+плата отвечала `error:bad magic` / `Loading boot-pkg fail(error=4)`.
+Причина ошибки: в заголовке `boot0` по смещениям `0x1c` и `0x20` стоит
+`0x20000`, и это адрес загрузки в SRAM, а не смещение на карте.
 
 ### Method 3: dd (не работает)
 
