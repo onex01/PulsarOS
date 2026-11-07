@@ -38,7 +38,51 @@ http://nskhuman.ru/allwinner/card/phoenixcard433rus.zip
 в режиме StartUp PhoenixCard создаёт таблицу разделов, без которой плата
 не стартует.
 
-### Method 2: Linux dd (Experimental)
+### Method 2: Linux (native, no Windows)
+
+`dd` всего образа **не работает**: IMAGEWTY — контейнер прошивки, а не образ
+диска. Карте нужны boot0 по смещению 8 КиБ, особая таблица разделов
+Allwinner и содержимое разделов по абсолютным смещениям. Скрипт делает это
+сам:
+
+```bash
+sudo scripts/flash-linux.sh out/PulsarOS-20261107.img /dev/sdX
+```
+
+Проверка без записи и проверка уже записанной карты:
+
+```bash
+sudo scripts/flash-linux.sh out/PulsarOS-*.img /dev/sdX --dry-run
+sudo scripts/flash-linux.sh out/PulsarOS-*.img /dev/sdX --verify-only
+```
+
+Раскладка, которую он пишет (все смещения берутся из `sunxi_mbr.fex` внутри
+образа, а не задаются в скрипте):
+
+| Смещение | Что |
+| --- | --- |
+| 0 | `sunxi_mbr.fex` — таблица разделов Allwinner (`softw411`) |
+| 8 КиБ | `boot0_sdcard.fex` — первичный загрузчик, BROM читает отсюда |
+| 128 КиБ | `boot_package.fex` — u-boot + optee + dtb |
+| по MBR | boot-resource, env, boot, vendor_boot, super, misc, vbmeta*, dtbo |
+| 3444 МиБ | `UDISK` — будущий `/data`, Android форматирует при первом старте |
+
+После записи скрипт сверяет sha256 каждого записанного участка с образом.
+
+**Единственное место, которое не выводится из образа, — смещение
+`boot_package`.** В `boot0` есть таблица имён (`u-boot`, `optee`, `monitor`,
+`scp`, `dtb`, `dtbo`, `logo`), то есть он парсит именно `boot_package`, но
+самого смещения в файлах нет. По умолчанию 128 КиБ; если плата не
+загружается, попробуйте другое:
+
+```bash
+sudo scripts/flash-linux.sh out/PulsarOS-*.img /dev/sdX --uboot-offset=1048576
+```
+
+### Method 3: dd (не работает)
+
+Оставлено для истории. `dd` пишет IMAGEWTY как есть, без boot0 и таблицы
+разделов — плата не загрузится.
 
 IMAGEWTY format can be written with `dd` but may not boot on all boards:
 ```bash
