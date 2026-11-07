@@ -147,6 +147,15 @@ inject_system() {
         echo "   раскладок: $k"
     fi
 
+    # Своя загрузочная анимация: если в репозитории лежит
+    # vendor/pulsaros/bootanimation/bootanimation.zip, он заменяет стоковый
+    # /system/media/bootanimation.zip.
+    local anim="$REPO_DIR/vendor/pulsaros/bootanimation/bootanimation.zip"
+    if [[ -f "$anim" ]]; then
+        place "$anim" "$m/system/media/bootanimation.zip"
+        echo "   bootanimation: свой ($(du -h "$anim" | cut -f1))"
+    fi
+
     # Конфиги и seed-скрипт для первого запуска.
     if [[ -d "$REPO_DIR/overlay/system/etc/pulsaros" ]]; then
         cp -a "$REPO_DIR/overlay/system/etc/pulsaros/." "$m/system/etc/pulsaros/" 2>/dev/null || true

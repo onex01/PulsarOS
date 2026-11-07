@@ -66,13 +66,24 @@ log "Строю план записи"
 python3 "$REPO_DIR/tools/flashplan.py" "$IMG" --json > "$WORK/plan.json" \
     || die "не удалось разобрать образ"
 
-python3 - "$WORK" <<'PY'
+python3 - "$WORK" "$(blockdev --getsz "$DEV")" <<'PY'
 import json, os, sys
 work = sys.argv[1]
 plan = json.load(open(os.path.join(work, "plan.json")))
+plan["disk_sectors"] = int(sys.argv[2])
 with open(os.path.join(work, "plan.tsv"), "w") as f:
+    ends = []
     for e in plan["entries"]:
         f.write(f"{e['kind']}\t{e['name']}\t{e['offset']}\t{e['size']}\t{e['source'] or '-'}\n")
+        if e["kind"] == "partition" and e["size"] > 0:
+            ends.append(e["offset"] // 512 + e["size"] // 512)
+    # userdata в MBR отсутствует (у UDISK размер 0) — добавляем тем же
+    # правилом, что и в GPT: от конца Reserve0 до резервной копии.
+    if ends:
+        start = max(ends)
+        size = plan["disk_sectors"] - start - 64
+        if size > 0:
+            f.write(f"partition\tuserdata\t{start * 512}\t{size * 512}\t-\n")
 PY
 
 CARD_BOOT=$(python3 -c "import json;print(json.load(open('$WORK/plan.json'))['card_boot_sector'])")
@@ -182,17 +193,42 @@ verify_all() {
     # boot0, поэтому проверять файл целиком нельзя. Сверяем две области:
     # protective MBR + заголовок (LBA 0..1) и саму таблицу.
     verify_at 0 "$WORK/gpt.bin" "GPT (LBA 0..1 + entries)"
+    read_magic() { # read_magic <offset> <count> -> hex
+        dd if="$DEV" bs=1 iflag=skip_bytes,count_bytes skip="$1" count="$2" \
+           status=none | od -An -t x1 | tr -d ' \n'
+    }
+
     while IFS=$'\t' read -r kind name off size src; do
-        # metadata форматируется заново, с образом он не совпадёт — проверяем
-        # отдельно, что на карте действительно ext4.
-        if [[ "$name" == "metadata" ]]; then
-            local magic
-            magic=$(dd if="$DEV" bs=1 iflag=skip_bytes,count_bytes skip=$(( off + 1080 )) \
-                    count=2 status=none | od -An -t x1 | tr -d ' \n')
-            if [[ "$magic" == "53ef" ]]; then ok "metadata: ext4"
-            else printf '\033[31m  FAIL metadata: не ext4 (%s)\033[0m\n' "$magic"; fail=$((fail+1)); fi
-            continue
-        fi
+        case "$name" in
+            metadata)
+                if [[ "$(read_magic $(( off + 1080 )) 2)" == "53ef" ]]; then ok "metadata: ext4"
+                else printf '\033[31m  FAIL metadata: не ext4\033[0m\n'; fail=$((fail+1)); fi
+                continue
+                ;;
+            media_data)
+                # FAT32: строка "FAT32" по смещению 82 в загрузочном секторе
+                if [[ "$(read_magic $(( off + 82 )) 5)" == "4641543332" ]]; then ok "media_data: FAT32"
+                else printf '\033[31m  FAIL media_data: не FAT32\033[0m\n'; fail=$((fail+1)); fi
+                continue
+                ;;
+            userdata)
+                # f2fs superblock: magic 0xF2F52010 по смещению 1024
+                if [[ "$(read_magic $(( off + 1024 )) 4)" == "1020f5f2" ]]; then ok "userdata: f2fs"
+                else printf '\033[31m  FAIL userdata: не f2fs\033[0m\n'; fail=$((fail+1)); fi
+                continue
+                ;;
+            bootloader_a)
+                # раздел должен быть читаемым FAT с нашим логотипом
+                if dd if="$DEV" bs=1M iflag=skip_bytes,count_bytes skip="$off" \
+                        count="$size" status=none > "$WORK/br-check.fex" 2>/dev/null \
+                   && mdir -i "$WORK/br-check.fex" ::bootlogo.bmp >/dev/null 2>&1; then
+                    ok "boot-resource: FAT + bootlogo.bmp"
+                else
+                    printf '\033[31m  FAIL boot-resource: FAT/логотип\033[0m\n'; fail=$((fail+1))
+                fi
+                continue
+                ;;
+        esac
         [[ "$src" == "-" ]] && continue
         extract "$src" "$WORK/$src"
         verify_at "$off" "$(prepare_source "$WORK/$src")" "$name"
@@ -243,18 +279,73 @@ wr "$WORK/gpt.bin" 0 "GPT"
 BACKUP_LBA=$(( CARD_SECTORS - 33 ))
 wr "$WORK/gpt.bin.backup" $(( BACKUP_LBA * 512 )) "GPT backup"
 
+# Разделы, которых нет в образе, но без которых Android не стартует или
+# которые нужны загрузчику. Содержимое создаётся здесь.
+derived() { # derived <name> <size> -> печатает путь к файлу
+    local name="$1" size="$2" out="$WORK/derived-$1.img"
+    case "$name" in
+        bootloader_a)
+            # u-boot читает bootlogo.bmp из этого раздела. В образе лежит
+            # усечённый FAT (заявляет 128 МиБ при файле 5.6 МБ), который
+            # u-boot не принимает: "Unrecognized filesystem type".
+            if [[ ! -f "$out" ]]; then
+                truncate -s "$size" "$out"
+                mkfs.vfat -F 16 -n BOOTLOGO "$out" >/dev/null 2>&1 \
+                    || die "mkfs.vfat для boot-resource не удался"
+                if [[ -f "$REPO_DIR/vendor/pulsaros/boot-logo/bootlogo.bmp" ]]; then
+                    mcopy -i "$out" "$REPO_DIR/vendor/pulsaros/boot-logo/bootlogo.bmp" ::bootlogo.bmp \
+                        || die "не удалось положить bootlogo.bmp"
+                else
+                    warn "bootlogo.bmp не найден — раздел останется пустым"
+                fi
+            fi
+            ;;
+        metadata)
+            if [[ ! -f "$out" ]]; then
+                truncate -s "$size" "$out"
+                mkfs.ext4 -q -F "$out" >/dev/null 2>&1 || die "mkfs.ext4 для metadata не удался"
+            fi
+            ;;
+        media_data)
+            # fstab монтирует его как vfat; пустой раздел даёт
+            # "FAT-fs: invalid media value".
+            if [[ ! -f "$out" ]]; then
+                truncate -s "$size" "$out"
+                mkfs.vfat -F 32 -n OEM "$out" >/dev/null 2>&1 || die "mkfs.vfat для media_data не удался"
+            fi
+            ;;
+        userdata)
+            # Android форматирует /data сам, но в этом образе он этого не
+            # делает и credstore падает с "No such file or directory".
+            # Готовим f2fs заранее; файл разреженный, на карту уйдут только
+            # занятые блоки (см. tools/writeimg.py).
+            if [[ ! -f "$out" ]]; then
+                truncate -s "$size" "$out"
+                mkfs.f2fs -q -f "$out" >/dev/null 2>&1 || die "mkfs.f2fs для userdata не удался"
+            fi
+            ;;
+        *)
+            return 1
+            ;;
+    esac
+    printf '%s\n' "$out"
+}
+
 while IFS=$'\t' read -r kind name off size src; do
     [[ "$kind" == "partition" ]] || continue
 
-    # metadata Android ждёт как ext4: пустой раздел он не монтирует на
-    # first_stage_mount ("VFS: Can't find ext4 filesystem"). В образе файла
-    # для него нет (src="-"), поэтому создаём ФС здесь. Проверка src должна
-    # идти после этой ветки, иначе раздел просто пропускается.
-    if [[ "$name" == "metadata" ]]; then
-        truncate -s "$size" "$WORK/metadata.img"
-        mkfs.ext4 -q -F "$WORK/metadata.img" >/dev/null 2>&1 \
-            || die "mkfs.ext4 для metadata не удался"
-        wr "$WORK/metadata.img" "$off" "$name"
+    if out=$(derived "$name" "$size"); then
+        case "$name" in
+            userdata)
+                # только занятые блоки, иначе 56 ГБ по USB 2.0
+                python3 "$REPO_DIR/tools/writeimg.py" "$out" "$DEV" "$off" \
+                    || die "запись userdata не удалась"
+                ok "$name → $off (f2fs, только занятые блоки)"
+                ;;
+            *)
+                wr "$out" "$off" "$name"
+                ;;
+        esac
         continue
     fi
 

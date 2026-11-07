@@ -65,7 +65,8 @@ sudo scripts/flash-linux.sh out/PulsarOS-*.img /dev/sdX --verify-only
 | 8 КиБ | `boot0_sdcard.fex` — первичный загрузчик, BROM читает отсюда |
 | 16.79 МиБ (сектор 32800) | `boot_package.fex` — u-boot + optee + dtb |
 | 20 МиБ (сектор 40960) | boot-resource, env, boot, vendor_boot, super, misc, vbmeta*, dtbo |
-| 3448 МиБ | `userdata` — будущий `/data`, Android форматирует при первом старте |
+| 3448 МиБ | `userdata` — f2fs, готовится заранее |
+| 20 МиБ | `bootloader_a` — FAT16 с `bootlogo.bmp` для u-boot |
 | конец карты | резервная копия GPT (u-boot проверяет и её) |
 
 После записи скрипт сверяет sha256 каждого записанного участка с образом.
@@ -172,3 +173,28 @@ sudo dd if=PulsarOS-OPiZero3-Android12-*.img of=/dev/sdX bs=4M status=progress c
 - [Инструкция по прошивке](http://nskhuman.ru/allwinner/opizero3/zero3man.php?np=15&nlang=1)
 - [Документация PhoenixCard](http://nskhuman.ru/allwinner/card/phoenixcard.php)
 - [Формат IMAGEWTY](http://nskhuman.ru/allwinner/firmware.php)
+
+
+## 11. Разделы, которые флешер создаёт сам
+
+Часть разделов в образе либо отсутствует, либо лежит в виде, который
+устройство не принимает. Флешер создаёт их содержимое:
+
+| Раздел | Что делает флешер | Почему |
+| --- | --- | --- |
+| `bootloader_a` | FAT16 32 МиБ + `bootlogo.bmp` | в образе усечённый FAT (заявляет 128 МиБ при файле 5.6 МБ), u-boot отвечает `Unrecognized filesystem type` и логотип не показывает |
+| `metadata` | `mkfs.ext4` | монтируется на first_stage_mount, пустой даёт `VFS: Can't find ext4 filesystem` |
+| `media_data` | `mkfs.vfat -F 32` | монтируется как `/oem`; пустой даёт `FAT-fs: invalid media value` |
+| `userdata` | `mkfs.f2fs` | без него `/data` не появляется, `credstore` падает с `chdir: /data/misc/credstore: No such file or directory` |
+
+`userdata` занимает 56 ГБ, но свежий f2fs реально содержит ~120 МБ данных.
+`tools/writeimg.py` пишет только занятые экстенты (`SEEK_DATA`/`SEEK_HOLE`),
+поэтому запись занимает секунды, а не час по USB 2.0.
+
+## 12. Загрузочная анимация и логотип
+
+* **Логотип ядра** (до Android, рисует u-boot): `vendor/pulsaros/boot-logo/bootlogo.bmp`,
+  попадает в раздел `bootloader_a`. Сейчас 800x480, 24 бита.
+* **Загрузочная анимация** (Android): положите `bootanimation.zip` в
+  `vendor/pulsaros/bootanimation/` — он заменит стоковый
+  `/system/media/bootanimation.zip` при сборке образа.

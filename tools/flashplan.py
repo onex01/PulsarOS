@@ -138,6 +138,7 @@ def build_plan(image_path):
 
     return {
         "image": image_path,
+        "disk_sectors": 0,  # заполняется флешером из реального размера карты
         "card_boot_sector": card_boot,
         "mbr_delta_sectors": delta,
         "mbr_bytes": bytes(shifted),
