@@ -30,6 +30,12 @@ APPS=(
     "primftpd.apk|https://f-droid.org/repo/org.primftpd_71.apk"
 )
 
+# Файлы, которые лежат не отдельным APK, а членом архива.
+# формат: "куда|url|что_взять_из_архива"
+EXTRACT=(
+    "DocumentsUI.apk|https://github.com/ph4n70m-404/DocumentsUI-Replacer/releases/download/v3/DocumentsUI-Replacer.zip|temp/lineageos/DocumentsUI-12_1.apk"
+)
+
 die() { echo "ОШИБКА: $*" >&2; exit 1; }
 
 want_sum() { # want_sum <имя файла> -> ожидаемый sha256 или пусто
@@ -62,6 +68,44 @@ for entry in "${APPS[@]}"; do
     curl -fL --retry 3 --retry-delay 2 -o "$dst.part" "$url" \
         || die "не скачался $file ($url)"
     mv "$dst.part" "$dst"
+    if [[ -n "$sum" ]]; then
+        [[ "$(sha256sum "$dst" | cut -d' ' -f1)" == "$sum" ]] \
+            || die "$file: sha256 не совпал с SHA256SUMS"
+    fi
+    ok=$((ok + 1))
+done
+
+# Архивы: скачать zip, достать из него нужный APK.
+for entry in "${EXTRACT[@]}"; do
+    file="${entry%%|*}"
+    rest="${entry#*|}"
+    url="${rest%%|*}"
+    member="${rest#*|}"
+    dst="$APK_DIR/$file"
+    sum="$(want_sum "$file")"
+
+    if [[ -f "$dst" ]]; then
+        if [[ -n "$sum" ]] && [[ "$(sha256sum "$dst" | cut -d' ' -f1)" != "$sum" ]]; then
+            echo "  битый хеш, перекачиваю: $file"; rm -f "$dst"
+        else
+            ok=$((ok + 1)); continue
+        fi
+    fi
+
+    if [[ $CHECK_ONLY -eq 1 ]]; then
+        echo "  нет: $file"; bad=$((bad + 1)); continue
+    fi
+
+    echo "  качаю: $file (архив $url)"
+    curl -fL --retry 3 --retry-delay 2 -o "$dst.zip" "$url" \
+        || die "не скачался архив для $file"
+    unzip -o -q -j "$dst.zip" "$member" -d "$APK_DIR" \
+        || die "в архиве нет $member"
+    rm -f "$dst.zip"
+    # unzip -j кладёт по basename
+    if [[ ! -f "$dst" ]]; then
+        mv "$APK_DIR/$(basename "$member")" "$dst" 2>/dev/null || die "не удалось достать $file"
+    fi
     if [[ -n "$sum" ]]; then
         [[ "$(sha256sum "$dst" | cut -d' ' -f1)" == "$sum" ]] \
             || die "$file: sha256 не совпал с SHA256SUMS"

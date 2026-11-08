@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Привилегированные разрешения DocumentsUI.
+
+  Обязателен: на этой прошивке `ro.control_privapp_permissions=enforce`, и
+  priv-app, запросивший привилегированное разрешение вне allowlist, роняет
+  system_server на старте ("bootloop"). Список — из AOSP
+  frameworks/base/data/etc/com.android.documentsui.xml, плюс CACHE_CONTENT и
+  REMOVE_TASKS, которые запрашивает сборка LineageOS 19.1.
+
+  MANAGE_DOCUMENTS здесь намеренно нет: у него protectionLevel
+  signature|documenter, и его выдаёт система пакету, который единственный
+  среди системных обрабатывает OPEN_DOCUMENT — allowlist на него не влияет.
+-->
+<permissions>
+    <privapp-permissions package="com.android.documentsui">
+        <permission name="android.permission.CACHE_CONTENT"/>
+        <permission name="android.permission.CHANGE_OVERLAY_PACKAGES"/>
+        <permission name="android.permission.INTERACT_ACROSS_USERS"/>
+        <permission name="android.permission.LOG_COMPAT_CHANGE"/>
+        <permission name="android.permission.MODIFY_QUIET_MODE"/>
+        <permission name="android.permission.READ_COMPAT_CHANGE_CONFIG"/>
+        <permission name="android.permission.REMOVE_TASKS"/>
+        <permission name="android.permission.START_FOREGROUND_SERVICES_FROM_BACKGROUND"/>
+    </privapp-permissions>
+</permissions>

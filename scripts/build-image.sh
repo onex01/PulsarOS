@@ -131,14 +131,20 @@ SYSTEM_APPS=(
     "DuckStation:DuckStation.apk"
     "Mupen64PlusFZ:Mupen64PlusFZ.apk"
     "TVBro:TVBro.apk"
-    "MaterialFiles:MaterialFiles.apk"
     "PrimitiveFTPd:primftpd.apk"
+)
+
+# Приложения, которые должны лежать в /system/priv-app. DocumentsUI нужен
+# там, а не в /system/app: MANAGE_DOCUMENTS выдаётся только системному пакету,
+# который единственный обрабатывает OPEN_DOCUMENT, и он должен быть priv-app.
+PRIV_APPS=(
+    "DocumentsUI:DocumentsUI.apk"
 )
 
 # Приложения, которые мы ставили раньше и больше не ставим. Каталог надо
 # снять явно: inject_apk трогает только то, что есть в SYSTEM_APPS, и без
 # этого старые файлы остаются в стейджинге навсегда.
-OBSOLETE_APPS=( Fennec )
+OBSOLETE_APPS=( Fennec MaterialFiles )
 
 # Стоковый мусор, который можно выкинуть. Отсутствующий каталог — не ошибка.
 DEBLOAT_SYSTEM=(
@@ -252,6 +258,33 @@ inject_system() {
         for app in "${SYSTEM_APPS[@]}"; do
             inject_apk "$m" "${app%%:*}" "${app#*:}"
         done
+
+        # /system/priv-app: тот же приём, но без lib/arm — у DocumentsUI
+        # нативного кода нет.
+        local p name apk
+        for p in "${PRIV_APPS[@]}"; do
+            name="${p%%:*}"; apk="${p#*:}"
+            if [[ -f "$REPO_DIR/prebuilt/apk/$apk" ]]; then
+                place "$REPO_DIR/prebuilt/apk/$apk" "$m/system/priv-app/$name/$name.apk"
+                printf '   %-16s priv-app %6s МиБ\n' "$name" \
+                    "$(awk -v b="$(stat -c %s "$REPO_DIR/prebuilt/apk/$apk")" \
+                       'BEGIN{printf "%.1f", b/1048576}')"
+            else
+                warn "нет $apk — $name не установлен"
+            fi
+        done
+    fi
+
+    # Привилегированные разрешения для добавленных priv-app. Порядок важен:
+    # при ro.control_privapp_permissions=enforce пакет без allowlist валит
+    # system_server на старте.
+    if compgen -G "$REPO_DIR/overlay/system/etc/permissions/*.xml" >/dev/null; then
+        mkdir -p "$m/system/etc/permissions"
+        local x
+        for x in "$REPO_DIR/overlay/system/etc/permissions"/*.xml; do
+            place "$x" "$m/system/etc/permissions/$(basename "$x")"
+        done
+        echo "   allowlist разрешений: $(ls "$REPO_DIR/overlay/system/etc/permissions"/*.xml | wc -l)"
     fi
 
     if [[ $WITH_CORES -eq 1 ]] && compgen -G "$REPO_DIR/prebuilt/cores/*.so" >/dev/null; then
