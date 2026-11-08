@@ -24,7 +24,8 @@ APPS=(
     "DuckStation.apk|https://downloads.duckstation.org/android-testing/downloads/duckstation-12010.apk"
     "Mupen64PlusFZ.apk|https://f-droid.org/repo/org.mupen64plusae.v3.alpha_246.apk"
     # браузер и утилиты
-    "Fennec.apk|https://f-droid.org/repo/org.mozilla.fennec_fdroid_1590000.apk"
+    # браузер: TV Bro навигацию с пульта/геймпада умеет, Fennec — нет
+    "TVBro.apk|https://github.com/truefedex/tv-bro/releases/download/v2.1.6/tvbro-2.1.6-generic-geckoIncluded-armeabi-v7a.apk"
     "MaterialFiles.apk|https://f-droid.org/repo/me.zhanghai.android.files_40.apk"
     "primftpd.apk|https://f-droid.org/repo/org.primftpd_71.apk"
 )

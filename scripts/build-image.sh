@@ -130,10 +130,15 @@ SYSTEM_APPS=(
     "PPSSPP:PPSSPP.apk"
     "DuckStation:DuckStation.apk"
     "Mupen64PlusFZ:Mupen64PlusFZ.apk"
-    "Fennec:Fennec.apk"
+    "TVBro:TVBro.apk"
     "MaterialFiles:MaterialFiles.apk"
     "PrimitiveFTPd:primftpd.apk"
 )
+
+# Приложения, которые мы ставили раньше и больше не ставим. Каталог надо
+# снять явно: inject_apk трогает только то, что есть в SYSTEM_APPS, и без
+# этого старые файлы остаются в стейджинге навсегда.
+OBSOLETE_APPS=( Fennec )
 
 # Стоковый мусор, который можно выкинуть. Отсутствующий каталог — не ошибка.
 DEBLOAT_SYSTEM=(
@@ -178,6 +183,9 @@ inject_apk() {
         warn "нет $apk — $dir не установлен"
         return
     fi
+    # Ставим начисто: при смене версии APK набор файлов может измениться, и
+    # старые библиотеки иначе останутся рядом с новыми.
+    rm -rf "$dst"
     place "$src" "$dst/$dir.apk"
 
     # Библиотек может не быть вовсе (чистый Java/DEX) — это нормально.
@@ -186,9 +194,6 @@ inject_apk() {
     local n=0 nso
     nso=$(unzip -l "$src" | grep -c 'lib/armeabi-v7a/.*\.so$' || true)
     if [[ ${nso:-0} -gt 0 ]]; then
-        # Чистим каталог: при смене версии APK набор .so может уменьшиться,
-        # и старые библиотеки иначе останутся рядом с новыми.
-        rm -rf "$dst/lib/arm"
         mkdir -p "$dst/lib/arm"
         if unzip -o -q -j "$src" 'lib/armeabi-v7a/*.so' -d "$dst/lib/arm"; then
             chmod 755 "$dst/lib/arm"/*.so
@@ -207,6 +212,16 @@ inject_system() {
     echo "   Выкидываю стоковый мусор из /system/app"
     local before=$DEBLOAT_KB
     drop_dirs "$m/system/app" "${DEBLOAT_SYSTEM[@]}"
+
+    # Снятые нами приложения: их каталоги не входят ни в DEBLOAT, ни в
+    # SYSTEM_APPS, поэтому иначе копятся в стейджинге от сборки к сборке.
+    local gone
+    for gone in "${OBSOLETE_APPS[@]}"; do
+        [[ -d "$m/system/app/$gone" ]] || continue
+        printf '   - %s (%s МиБ, снято)\n' "$gone" \
+            "$(du -sm "$m/system/app/$gone" | cut -f1)"
+        rm -rf "$m/system/app/$gone"
+    done
     echo "   освобождено из /system/app: $(debloat_mib $((DEBLOAT_KB - before))) МиБ"
 
     echo "   Выкидываю стоковый мусор из /system/priv-app"
