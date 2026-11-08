@@ -16,9 +16,18 @@ Layout written:
 
     LBA 0        protective MBR (type 0xEE)
     LBA 1        GPT header
-    LBA 2..33    128 partition entries of 128 bytes
-    last LBA     backup header
-    ...          backup entries
+    LBA 2..N     partition entries (ceil(count * 128 / 512) sectors)
+    last-33      backup entries (32 sectors reserved, as Allwinner does)
+    last         backup header
+
+The backup block is the important part. Allwinner's own `sunxi_gpt.fex`
+template uses `last_usable = last_lba - 33`, i.e. it reserves a full
+128-entry array (32 sectors) at the very end of the card, with the backup
+header in the last sector. u-boot validates the backup header at `last_lba`
+and, when it does not find one, "repairs" the table — and that repair write
+lands past the end of the card ("block number exceeds max") and falls back to
+rewriting the first partition. Getting this wrong destroys whatever lives in
+partition 1, which is where u-boot reads bootlogo.bmp from.
 
 Usage:
     python3 mkgpt.py --disk-sectors N --out gpt.bin \
@@ -86,9 +95,18 @@ def build_header(my_lba, alt_lba, first_usable, last_usable,
 
 
 def build(disk_sectors, parts, disk_guid, entries_lba=ENTRIES_LBA, count=ENTRY_COUNT):
-    entries_sectors = count * ENTRY_SIZE // SECTOR
+    # Записи занимают ceil(count*128/512) секторов: 26 записей = 3328 байт =
+    # 6.5 сектора, то есть 7. Округление вниз оставляло last_usable на сектор
+    # выше реального конца таблицы.
+    entries_bytes = count * ENTRY_SIZE
+    entries_sectors = (entries_bytes + SECTOR - 1) // SECTOR
     first_usable = entries_lba + entries_sectors
-    last_usable = disk_sectors - entries_sectors - 2
+
+    # Как в стоковом sunxi_gpt.fex: резервная копия — 32 сектора записей плюс
+    # заголовок в последнем секторе карты.
+    last_lba = disk_sectors - 1
+    backup_entries_lba = disk_sectors - 33
+    last_usable = last_lba - 33
 
     # The last partition (userdata) is sized to the end of the card, which
     # would overlap the backup GPT. Clamp every partition to last_usable.
@@ -118,10 +136,9 @@ def build(disk_sectors, parts, disk_guid, entries_lba=ENTRIES_LBA, count=ENTRY_C
     struct.pack_into("<I", mbr, e + 12, min(disk_sectors - 1, 0xFFFFFFFF))
     mbr[510:512] = b"\x55\xaa"
 
-    primary_header = build_header(1, disk_sectors - 1, first_usable,
+    primary_header = build_header(1, last_lba, first_usable,
                                   last_usable, disk_guid, entries_crc, entries_lba, count)
-    backup_entries_lba = disk_sectors - entries_sectors - 1
-    backup_header = build_header(disk_sectors - 1, 1, first_usable,
+    backup_header = build_header(last_lba, 1, first_usable,
                                  last_usable, disk_guid, entries_crc, backup_entries_lba, count)
 
     # Entries do not have to sit at LBA 2. Allwinner writes boot0 at sector 16,
@@ -133,7 +150,7 @@ def build(disk_sectors, parts, disk_guid, entries_lba=ENTRIES_LBA, count=ENTRY_C
     out += primary_header + b"\x00" * (SECTOR - len(primary_header))
     out += b"\x00" * ((entries_lba - ENTRIES_LBA) * SECTOR)
     out += entries
-    return bytes(out), bytes(backup_header), entries, backup_entries_lba, disk_sectors - 1
+    return bytes(out), bytes(backup_header), entries, backup_entries_lba, last_lba
 
 
 def main():
@@ -163,10 +180,13 @@ def main():
     with open(args.out, "wb") as f:
         f.write(head)
 
-    # Backup GPT goes at the end of the card; the flasher writes it separately.
+    # Резервная копия пишется в конец карты одним куском, начиная с
+    # backup_entries_lba = последние 33 сектора: 32 сектора записей, затем
+    # заголовок в самом последнем секторе. u-boot ищет заголовок именно там.
+    backup_block = entries + b"\x00" * (32 * SECTOR - len(entries))
     with open(args.out + ".backup", "wb") as f:
-        f.write(entries)
-        f.write(backup_header)
+        f.write(backup_block)
+        f.write(backup_header + b"\x00" * (SECTOR - len(backup_header)))
 
     print(f"GPT: {len(parts)} разделов, disk {args.disk_sectors:,} секторов")
     print(f"  таблица: {args.out} ({len(head):,} байт)")

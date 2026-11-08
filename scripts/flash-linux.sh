@@ -224,6 +224,17 @@ verify_all() {
                 else printf '\033[31m  FAIL userdata: не f2fs\033[0m\n'; fail=$((fail+1)); fi
                 continue
                 ;;
+            bootloader_a)
+                # u-boot читает bootlogo.bmp из первого раздела
+                if dd if="$DEV" bs=1M iflag=skip_bytes,count_bytes skip="$off" \
+                        count="$size" status=none > "$WORK/bl-check.fex" 2>/dev/null \
+                   && mdir -i "$WORK/bl-check.fex" ::BOOTLOGO.BMP >/dev/null 2>&1; then
+                    ok "bootloader_a: FAT + bootlogo.bmp"
+                else
+                    printf '\033[31m  FAIL bootloader_a: FAT/логотип\033[0m\n'; fail=$((fail+1))
+                fi
+                continue
+                ;;
             boot-resource)
                 # раздел должен быть читаемым FAT с нашим логотипом
                 if dd if="$DEV" bs=1M iflag=skip_bytes,count_bytes skip="$off" \
@@ -240,6 +251,24 @@ verify_all() {
         extract "$src" "$WORK/$src"
         verify_at "$off" "$(prepare_source "$WORK/$src")" "$name"
     done < "$WORK/plan.tsv"
+
+    # Резервная копия GPT: заголовок в последнем секторе, записи — 32 сектора
+    # перед ним. Если её нет на месте, u-boot считает таблицу битой, пытается
+    # её "починить", промахивается за конец карты и перезаписывает первый
+    # раздел — вместе с логотипом.
+    local bhdr bmy bent blba
+    blba=$(( CARD_SECTORS - 1 ))
+    bhdr=$(dd if="$DEV" bs=512 skip="$blba" count=1 status=none | head -c 8)
+    bmy=$(dd if="$DEV" bs=512 skip="$blba" count=1 status=none \
+          | od -An -t u8 -j 24 -N 8 | tr -d ' ')
+    bent=$(dd if="$DEV" bs=512 skip="$blba" count=1 status=none \
+           | od -An -t u8 -j 72 -N 8 | tr -d ' ')
+    if [[ "$bhdr" == "EFI PART" && "$bmy" == "$blba" && "$bent" == "$(( CARD_SECTORS - 33 ))" ]]; then
+        ok "GPT backup: LBA $(( CARD_SECTORS - 33 ))..$blba"
+    else
+        printf '\033[31m  FAIL GPT backup: заголовок не в последнем секторе\033[0m\n'
+        fail=$((fail+1))
+    fi
 }
 
 if [[ $VERIFY_ONLY -eq 1 ]]; then
@@ -291,19 +320,36 @@ wr "$WORK/gpt.bin.backup" $(( BACKUP_LBA * 512 )) "GPT backup"
 derived() { # derived <name> <size> -> печатает путь к файлу
     local name="$1" size="$2" out="$WORK/derived-$1.img"
     case "$name" in
-        boot-resource)
-            # u-boot читает bootlogo.bmp именно из раздела с этим именем. В образе лежит
-            # усечённый FAT (заявляет 128 МиБ при файле 5.6 МБ), который
-            # u-boot не принимает: "Unrecognized filesystem type".
+        bootloader_a|boot-resource)
+            # u-boot читает bootlogo.bmp из первого раздела (в стоке там
+            # лежит boot-resource.fex), а часть его сборок ищет ещё и раздел
+            # с именем ровно "boot-resource" — поэтому та же ФС кладётся в
+            # оба места.
+            #
+            # Стоковый boot-resource.fex заявляет 128 МиБ при файле 5.6 МБ и
+            # имеет sectors-per-track = 0, поэтому mtools его не открывает:
+            # разбираем своим fatextract.py, раздел собираем заново на весь
+            # размер и подменяем логотип нашим.
             if [[ ! -f "$out" ]]; then
+                local src="$WORK/boot-resource.fex" stage="$WORK/bootres"
+                extract boot-resource.fex "$src"
+                if [[ ! -d "$stage" ]]; then
+                    mkdir -p "$stage"
+                    python3 "$REPO_DIR/tools/fatextract.py" "$src" "$stage" >/dev/null \
+                        || warn "не удалось прочитать стоковый boot-resource"
+                fi
                 truncate -s "$size" "$out"
-                mkfs.vfat -F 16 -n BOOTLOGO "$out" >/dev/null 2>&1 \
-                    || die "mkfs.vfat для boot-resource не удался"
+                mkfs.vfat -F 16 -n Volumn -R 1 -s 4 -S 512 "$out" >/dev/null 2>&1 \
+                    || die "mkfs.vfat для bootloader_a не удался"
+                if compgen -G "$stage/*" >/dev/null; then
+                    mcopy -s -i "$out" "$stage"/* :: 2>/dev/null \
+                        || warn "часть файлов boot-resource не скопирована"
+                fi
                 if [[ -f "$REPO_DIR/vendor/pulsaros/boot-logo/bootlogo.bmp" ]]; then
-                    mcopy -i "$out" "$REPO_DIR/vendor/pulsaros/boot-logo/bootlogo.bmp" ::bootlogo.bmp \
-                        || die "не удалось положить bootlogo.bmp"
+                    mcopy -o -i "$out" "$REPO_DIR/vendor/pulsaros/boot-logo/bootlogo.bmp" \
+                          ::BOOTLOGO.BMP || die "не удалось положить bootlogo.bmp"
                 else
-                    warn "bootlogo.bmp не найден — раздел останется пустым"
+                    warn "bootlogo.bmp не найден — логотипа не будет"
                 fi
             fi
             ;;
