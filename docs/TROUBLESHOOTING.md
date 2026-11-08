@@ -156,3 +156,83 @@ ssh -p 2222 root@<ip-адрес>
 #### WiFi не подключается
 - Использовать мастер PulsarSetup
 - Настроить через Android Settings
+
+---
+
+## Русский — случаи из этой прошивки
+
+Ниже не гипотезы, а то, что реально встретилось на Orange Pi Zero 3, с точной
+причиной и проверенным лечением.
+
+### RetroArch падает: `dlopen failed: library "libretroarch-activity.so" not found`
+
+Системному APK Android **не распаковывает** нативные библиотеки в `/data`.
+Если рядом с APK нет `lib/arm`, загрузчику неоткуда взять `.so`.
+
+Лечение — распаковать `lib/armeabi-v7a/*.so` из APK в
+`/system/app/RetroArch/lib/arm/` (`chmod 755`). `build-image.sh` делает это
+для всех предустановленных приложений автоматически.
+
+### PPSSPP «не открывается», в логе `No Activity found to handle OPEN_DOCUMENT`
+
+В стоковой прошивке нет `com.android.documentsui` — системного файлового
+диалога. PPSSPP на первом запуске просит выбрать папку для данных и падает.
+
+Лечение: положить DocumentsUI в `/system/priv-app/DocumentsUI/` **и** его
+allowlist в `/system/etc/permissions/com.android.documentsui.xml`. На этой
+прошивке `ro.control_privapp_permissions=enforce`, поэтому priv-app без
+allowlist валит system_server на старте.
+
+Дополнительно: `MANAGE_DOCUMENTS` выдаётся только **одному** системному
+пакету, который обрабатывает `OPEN_DOCUMENT`. Если в `/system` есть второй
+такой (например, Material Files), грант не достаётся никому и DocumentsUI
+падает с `Permission Denial: opening provider ... ExternalStorageProvider`.
+Второй пакет надо убрать из `/system`.
+
+### `getevent` видит кнопку, а RetroArch её не замечает
+
+RetroArch в Android не имеет таблицы keycode→кнопка: Android-драйвер пишет
+сырой keycode в битовую маску, а бинды задаёт профиль «Android Gamepad». Коды
+`98 (BUTTON_C)` и `101 (BUTTON_Z)` в нём не назначены ни на что и
+**игнорируются молча**.
+
+Проверять так:
+
+```bash
+adb shell getevent -t /dev/input/eventN   # нажимать по одной кнопке
+adb shell cat /system/usr/keylayout/Vendor_XXXX_Product_YYYY.kl
+```
+
+Если кода нет в раскладке, Android отдаёт `AKEYCODE_UNKNOWN`. У Switch Pro
+Controller (057e:2009) так терялась кнопка X (`0x132`).
+
+### Экран 1280×720 вместо 1080p
+
+```
+ERROR: pinctrl_get for HDMI2.0 DDC fail
+```
+
+EDID не читается, драйвер берёт дефолтный режим. `wm size` и `dumpsys display`
+показывают единственный режим 1280×720 — «1080» даёт скейлер телевизора.
+
+### Логотип ядра не появляется, в логе `update gpt fail`
+
+u-boot не нашёл резервную копию GPT там, где ждал, и перезаписал первый раздел
+вместе с FAT и `bootlogo.bmp`. Причина — неверная геометрия резервной копии в
+`tools/mkgpt.py`; подробности и правильные числа — в `FLASHING.md`,
+раздел про резервную копию GPT.
+
+### Сборка падает с `write error (disk full?)` на `libxul.so`
+
+В стейджинге остались каталоги приложений, которые больше не ставятся
+(например, Fennec после замены на TV Bro). `inject_apk` чистит только то, что
+есть в `SYSTEM_APPS`. Лечение: `OBSOLETE_APPS` в `build-image.sh` и
+`rm -rf` целевого каталога перед установкой — уже сделано.
+
+### `mount: ... is already mounted` при повторной сборке
+
+Прошлая сборка упала и оставила loop-монтирование. Размонтировать:
+
+```bash
+sudo umount work/build/mnt-system_a work/build/mnt-product_a
+```

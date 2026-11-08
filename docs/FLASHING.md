@@ -61,15 +61,39 @@ sudo scripts/flash-linux.sh out/PulsarOS-*.img /dev/sdX --verify-only
 
 | Смещение | Что |
 | --- | --- |
-| 0 | GPT: protective MBR + заголовок + таблица разделов |
-| 8 КиБ | `boot0_sdcard.fex` — первичный загрузчик, BROM читает отсюда |
+| 0 | protective MBR + заголовок GPT + 26 записей (LBA 2..8, до `boot0`) |
+| 8 КиБ (сектор 16) | `boot0_sdcard.fex` — первичный загрузчик, BROM читает отсюда |
 | 16.79 МиБ (сектор 32800) | `boot_package.fex` — u-boot + optee + dtb |
-| 20 МиБ (сектор 40960) | boot-resource, env, boot, vendor_boot, super, misc, vbmeta*, dtbo |
-| 3448 МиБ | `userdata` — f2fs, готовится заранее |
-| 20 МиБ | `bootloader_a` — FAT16 с `bootlogo.bmp` для u-boot |
-| конец карты | резервная копия GPT (u-boot проверяет и её) |
+| 20 МиБ (сектор 40960) | `bootloader_a` — FAT16 32 МиБ с нашим `bootlogo.bmp` |
+| дальше | `bootloader_b`, `env_a/b`, `boot_a/b`, `vendor_boot_a/b`, `super`, `misc`, `vbmeta*`, `dtbo_a/b`, `media_data`, `boot-resource` (32 МиБ, резервная копия логотипа), `userdata` |
+| `диск − 33` … `диск − 1` | резервная копия GPT: 32 сектора записей + заголовок в последнем секторе |
 
-После записи скрипт сверяет sha256 каждого записанного участка с образом.
+После записи скрипт сверяет sha256 каждого записанного участка с образом и
+отдельно проверяет, что заголовок резервной копии GPT лежит в последнем
+секторе карты.
+
+**Геометрия резервной копии GPT критична.** Если она не там, где её ищет
+u-boot, он считает таблицу битой (`the GPT table is bad` — строка есть в его
+бинарнике рядом с `update gpt fail`), пытается «починить» её и пишет копию в
+первый раздел. Это уничтожает FAT с `bootlogo.bmp` до того, как
+`boot_gui_init` успеет прочитать логотип. Симптом в логе:
+
+```
+[mmc]: MMC: block number 0x75c1007 exceeds max(0x75c1000)
+[mmc]: write block failed
+update gpt fail
+```
+
+Число `0x75c1007` — это `размер карты + 7`, то есть записи уехали за конец.
+`mkgpt.py` теперь повторяет раскладку Allwinner (как в `sunxi_gpt.fex`):
+
+```
+first_usable    = entries_lba + ceil(count * 128 / 512)   = 9
+last_usable     = last_lba - 33
+entries (backup) = диск - 33 … диск - 2
+header  (backup) = диск - 1
+```
+
 
 **Таблица разделов — GPT, а не Allwinner MBR.** u-boot в этой прошивке
 разбирает разделы только через `part_get_info_efi`; с MBR он пишет
@@ -182,7 +206,8 @@ sudo dd if=PulsarOS-OPiZero3-Android12-*.img of=/dev/sdX bs=4M status=progress c
 
 | Раздел | Что делает флешер | Почему |
 | --- | --- | --- |
-| `bootloader_a` | FAT16 32 МиБ + `bootlogo.bmp` | в образе усечённый FAT (заявляет 128 МиБ при файле 5.6 МБ), u-boot отвечает `Unrecognized filesystem type` и логотип не показывает |
+| `bootloader_a` | FAT16 32 МиБ: наш `bootlogo.bmp` + шрифты и кадры заряда из стока | сюда u-boot смотрит за логотипом; стоковый `boot-resource.fex` заявляет 128 МиБ при файле 5.6 МБ и имеет `sectors-per-track = 0`, поэтому mtools его не открывает — содержимое вытаскивает `tools/fatextract.py` |
+| `boot-resource` | тот же FAT16 | часть сборок u-boot ищет раздел ровно с таким именем, а не по номеру |
 | `metadata` | `mkfs.ext4` | монтируется на first_stage_mount, пустой даёт `VFS: Can't find ext4 filesystem` |
 | `media_data` | `mkfs.vfat -F 32` | монтируется как `/oem`; пустой даёт `FAT-fs: invalid media value` |
 | `userdata` | `mkfs.f2fs` | без него `/data` не появляется, `credstore` падает с `chdir: /data/misc/credstore: No such file or directory` |
@@ -194,7 +219,16 @@ sudo dd if=PulsarOS-OPiZero3-Android12-*.img of=/dev/sdX bs=4M status=progress c
 ## 12. Загрузочная анимация и логотип
 
 * **Логотип ядра** (до Android, рисует u-boot): `vendor/pulsaros/boot-logo/bootlogo.bmp`,
-  попадает в раздел `bootloader_a`. Сейчас 800x480, 24 бита.
+  попадает в первый раздел `bootloader_a` вместе со стоковыми шрифтами
+  `FONT24.SFT`/`FONT32.SFT`, `FASTBOOT.BMP`, `MAGIC.BIN` и каталогом `BAT/`
+  (кадры анимации заряда). Сейчас 800×480, 24 бита.
+* Раздел собирается заново на весь размер: стоковый `boot-resource.fex`
+  усечён и нестандартен, поэтому содержимое вытаскивается `tools/fatextract.py`,
+  а файловая система создаётся `mkfs.vfat`. После записи флешер проверяет
+  `mdir ::BOOTLOGO.BMP`.
 * **Загрузочная анимация** (Android): положите `bootanimation.zip` в
   `vendor/pulsaros/bootanimation/` — он заменит стоковый
-  `/system/media/bootanimation.zip` при сборке образа.
+  `/system/media/bootanimation.zip` при сборке образа. Кадры рендерятся как
+  есть, на экране 720p анимация 800×480 будет по центру.
+* **Логотип виден только если GPT корректен** — иначе u-boot затирает первый
+  раздел (см. раздел про резервную копию GPT выше).

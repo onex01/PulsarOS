@@ -3,273 +3,215 @@
 > **English** | [Русский](#pulsaros-русский)
 
 > Android 12 gaming firmware for the Orange Pi Zero 3 (Allwinner H618).
-> Plug-and-play retro gaming console — flash, connect gamepad, play.
+> Built by repacking the stock Orange Pi image, not by compiling AOSP.
 
-PulsarOS transforms the Orange Pi Zero 3 into a dedicated retro gaming console
-connected to any monitor or TV. Built on Android 12 with full GPU acceleration
-(Mali G31 MP2, OpenGL ES 3.2, Vulkan 1.1).
+PulsarOS turns the Orange Pi Zero 3 into a retro console: flash the card, plug in
+a gamepad, play. The base is the official Orange Pi Android 12 image — we resize
+its logical partitions, install our apps and drivers, and rebuild the flashable
+image with our own tools.
 
-## Features
+**Version:** 0.1.0-dev · **Status:** booting and usable, OOBE not built yet.
 
-- **Plug and play** — flash the image, connect a gamepad, and start playing.
-  No terminal, no configuration files, no internet required.
-- **28 gaming systems** — NES, SNES, Game Boy, GBA, N64, NDS, Mega Drive,
-  PlayStation, PSP, arcade, Atari, MSX, WonderSwan, and more.
-- **Auto-detect gamepads** — Xbox, PlayStation, Nintendo Switch Pro, 8BitDo,
-  and 30+ controllers work out of the box via USB or Bluetooth.
-- **External storage** — plug in a USB drive with `PulsarOS/roms/` and games
-  are detected automatically. No file transfers needed.
-- **Daijishou** — open-source retro launcher with widgets, themes, and
-  RetroAchievements support. Manages your game library with artwork and metadata.
-- **RetroArch** — preloaded with 24 optimized cores for ARM Cortex-A53.
-- **Kodi** — video and audio playback from `PulsarOS/video/` and `PulsarOS/audio/`.
-- **OOBE wizard** — guided first-run setup: language, gamepad, network, display.
-- **Web file manager** — upload ROMs and media from any browser on your network.
-- **Custom boot animation** — gradient sweep of PulsarOS logo.
-- **F-Droid** — open-source app store for additional applications.
-- **SSH access** — remote management via dropbear SSH server.
-- **Dark theme** — enabled by default for better visibility.
+## What actually works
+
+Verified on the board, not planned:
+
+| Area | State |
+| --- | --- |
+| Boot chain | boot0 → boot_package → OP-TEE → u-boot → GPT → kernel → Android |
+| Network | Wi-Fi (`wlan0`, sprdwl_ng), ADB over TCP at `:5555` (`adb root`) |
+| Storage | `/data` = 56 GB f2fs, userdata pre-formatted |
+| Frontend | Daijishou installed; the stock `TvLauncher` is still the home app |
+| RetroArch | 1.22.2 `ra32`, native libs unpacked, 30 armv7 cores staged |
+| Standalone emulators | PPSSPP 1.20.4, DuckStation, Mupen64Plus FZ |
+| Video | VLC 3.7.1 |
+| Browser | TV Bro 2.1.6 — navigable with a d-pad / gamepad |
+| File access | AOSP DocumentsUI added — the stock image has none |
+| File transfer | Primitive FTPd (FTP/SFTP/SCP on the LAN) |
+| Gamepads | Nintendo Switch Pro fixed against measured evdev codes; 190 layouts |
+| Boot animation | Owner's own `bootanimation.zip`, 800×480@60 |
+| Debloat | 17 stock test/demo packages removed (~54 MiB) |
+
+## What is not done yet
+
+- **Kernel logo** — u-boot still rewrites the GPT into partition 1 on some
+  boots; the fix is in the GPT geometry and is being verified.
+- **OOBE** — language, licence, network, gamepad wizard. Nothing of this exists.
+- **External storage layout** — automatic `PulsarOS/{game,video,music}` tree and
+  auto-scan are not implemented.
+- **Web file server** — only FTP for now.
+- **1080p** — the display comes up as 1280×720 because HDMI DDC/EDID fails at
+  probe (`pinctrl_get for HDMI2.0 DDC fail`); the driver falls back to 720p.
+- **Launcher switch, core seeding into `/data`** — done by hand over ADB, not in
+  the image yet.
 
 ## Hardware
 
 | Board | SoC | RAM | Status |
-|---|---|---|---|
-| Orange Pi Zero 3 | Allwinner H618, Mali G31 MP2 | 1–4 GB | Primary target |
+| --- | --- | --- | --- |
+| Orange Pi Zero 3 | Allwinner H618, Mali-G31 MP2 | 1–4 GB | primary target |
+
+Display out is micro-HDMI; the expansion board adds two USB ports, analogue
+video, a microphone and an IR receiver.
 
 ## Requirements
 
 - Orange Pi Zero 3 (any RAM variant)
-- microSD card (16GB+, A2 recommended)
-- Gamepad (USB or Bluetooth) — or keyboard+mouse
-- Power supply (5V/3A USB-C)
-- Monitor/TV via micro-HDMI
+- microSD card, 16 GB or larger
+- Gamepad (USB or Bluetooth) or keyboard + mouse
+- 5 V / 3 A USB-C supply
+- Monitor or TV over micro-HDMI
 
 ## Building
 
-### Prerequisites
-
-- Ubuntu 22.04 LTS (x86_64) — recommended by Allwinner
-- 16+ GB RAM (32 GB recommended)
-- 300+ GB SSD
-- Orange Pi Android 12 BSP source
-
-### Quick Start
+This is not an AOSP build. The pipeline takes the stock image apart, replaces
+`super` and the boot resources, and writes the result back as a flashable
+IMAGEWTY image.
 
 ```bash
-# 1. Clone PulsarOS
-git clone https://github.com/one/PulsarOS.git
-cd PulsarOS
+# 1. Put the stock image here (md5 2fa5d4f1e890a03d7d8a36c410c8bd48):
+#    /home/one/Github/tmp/OrangePi_Zero3_Android12_v1.0/OrangePi_Zero3_Android12_v1.0.img
 
-# 2. Run the interactive build system
-bash scripts/build.sh
+# 2. Download the apps that are not in git (~950 MB):
+scripts/fetch-apps.sh
 
-# 3. Select "7) Auto Build" — follows all steps automatically
+# 3. Build the image (needs root: mounts loops, resizes ext4):
+echo <sudo-password> | sudo -S bash -c 'HOME=$HOME bash scripts/build-image.sh'
+#    → out/PulsarOS-YYYYMMDD.img + .md5
+
+# 4. Flash the card:
+sudo scripts/flash-linux.sh out/PulsarOS-YYYYMMDD.img /dev/sdX --yes
 ```
 
-### Build Pipeline
+The build needs about 11 GB of scratch space under `work/` and roughly
+20 minutes on a mechanical disk.
 
-```
-1. Build Android    → scripts/build.sh → 5)
-2. Create image     → scripts/build.sh → 6) (imgRePacker)
-3. Flash to SD card → sudo scripts/flash-sdcard.sh out/pulsaros-v7.img /dev/sdX
-```
+### What the build does
 
-### Manual Build Steps
+1. Extracts the stock sections (`imagewty.py`) and unpacks `super` (`lpunpack.py`).
+2. Enlarges `system_a` to 2048 MiB and `product_a` to 400 MiB, resizes ext4.
+3. Drops stock bloat, installs 7 apps plus RetroArch/Daijishou, unpacks their
+   `lib/armeabi-v7a` into `lib/arm` (a preinstalled APK does not get its native
+   libraries extracted into `/data`), stages 30 libretro cores, key layouts,
+   boot animation and the DocumentsUI priv-app allowlist.
+4. Packs `super` back with `lpmake.py`, compresses it, and rewrites the IMAGEWTY
+   section table.
 
-```bash
-# Build Android (with BSP patches + PulsarOS integration)
-bash scripts/build.sh  # → 5) Build Android
+`flash-linux.sh` then derives the card layout from `cardscript.fex` and
+`sunxi_mbr.fex`, generates a GPT, and writes everything with verification:
+`boot0` at sector 16, `boot_package` at sector 32800, partitions from 40960.
 
-# Create IMAGEWTY (stock firmware + our super.fex)
-bash scripts/build.sh  # → 6) Create Image
-
-# Flash to SD card (Linux, no Windows needed)
-sudo ./scripts/flash-sdcard.sh out/pulsaros-v7.img /dev/sdX
-```
-
-### Variants
-
-| Variant | GMS | F-Droid | Description |
-|---------|-----|---------|-------------|
-| Vanilla | ❌ | ✅ | No Google services, open-source only |
-| GMS | ✅ | ✅ | Google Play Store + Play Services |
-
-## Project Structure
+## Project structure
 
 ```
 PulsarOS/
-├── scripts/                        # Modular build system (v3.0)
-│   ├── build.sh                    # Entry point — menu + auto-build
-│   ├── lib/common.sh               # Colors, logging, helpers
-│   ├── lib/config.sh               # Configuration management
-│   └── steps/                      # One file per build step
-│       ├── 00-setup-system.sh      # Install dependencies
-│       ├── 01-configure.sh         # Set source path
-│       ├── 02-download-apks.sh     # Download APKs
-│       ├── 03-build-cores.sh       # Download libretro cores
-│       ├── 04b-build-longan.sh     # Build longan (kernel + bootloader)
-│       ├── 05-build-android.sh     # Build Android
-│       ├── 06-create-image.sh      # Create firmware image
-│       ├── 07-flash.sh             # Flash to SD
-│       ├── 08-install-logo.sh      # Install boot logo
-│       ├── 09-clean.sh             # Clean build artifacts
-│       └── 10-view-log.sh          # View build logs
-├── device/softwinner/zero3/        # Device tree (H618 board config)
-├── vendor/pulsaros/                # Vendor overlays (configs, scripts, APKs)
-├── packages/apps/PulsarSetup/      # OOBE wizard (Kotlin)
-├── patches/android-source/         # Source patches for BSP
-├── docs/                           # Documentation
-└── PROJECT_CONTEXT.md              # Full project context
+├── tools/            image tools (no external deps)
+│   ├── imagewty.py   Allwinner IMAGEWTY sections: list/extract/repack
+│   ├── lpunpack.py   Android dynamic partitions (liblp) read/write
+│   ├── lpmake.py     rebuild super from a manifest
+│   ├── sparse.py     Android sparse ↔ raw
+│   ├── mkgpt.py      GPT for the card (Allwinner-compatible geometry)
+│   ├── mbr.py        Allwinner softw411 MBR
+│   ├── flashplan.py  card layout from cardscript.fex + sunxi_mbr.fex
+│   ├── writeimg.py   writes only allocated blocks (for f2fs userdata)
+│   └── fatextract.py reads the stock boot-resource FAT (mtools cannot)
+├── scripts/
+│   ├── build-image.sh    the image builder
+│   ├── flash-linux.sh    card writer with verification
+│   ├── fetch-apps.sh     downloads APKs and checks SHA256SUMS
+│   └── pulsaros-diag.sh  pulls display/GLES/logcat from the board over adb
+├── prebuilt/apk/     APKs (gitignored) + SHA256SUMS
+├── prebuilt/cores/   30 libretro cores (gitignored)
+├── overlay/system/   key layouts, priv-app permission allowlists
+├── vendor/pulsaros/  boot animation, kernel logo
+└── docs/             findings, flashing, troubleshooting, status
 ```
-
-See [docs/REPOSITORY-STRUCTURE.md](docs/REPOSITORY-STRUCTURE.md) for complete inventory.
 
 ## Documentation
 
-| Document | Description |
-|----------|-------------|
-| [BUILD.md](docs/BUILD.md) | Build instructions (EN+RU) |
-| [FLASHING.md](docs/FLASHING.md) | Flashing to SD card |
-| [IMAGE-FORMAT.md](docs/IMAGE-FORMAT.md) | Allwinner IMAGEWTY format |
-| [REPOSITORY-STRUCTURE.md](docs/REPOSITORY-STRUCTURE.md) | Full repo inventory |
-| [TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) | Common issues and fixes |
-| [HARDWARE.md](docs/HARDWARE.md) | Compatible hardware |
-| [SOURCES.md](docs/SOURCES.md) | Source code links |
-| [LICENSE-STRATEGY.md](docs/LICENSE-STRATEGY.md) | Licensing approach |
-| [BUILD-SYSTEM-FIX.md](docs/BUILD-SYSTEM-FIX.md) | Overlay patching model |
-| [COMPLIANCE-CHECKLIST.md](docs/COMPLIANCE-CHECKLIST.md) | Pre-release checklist |
+| File | What is inside |
+| --- | --- |
+| `docs/STATUS.md` | Current state, known bugs, next steps |
+| `docs/FINDINGS-STOCK.md` | Everything measured about the stock image |
+| `docs/FLASHING.md` | Card layout and flashing procedure |
+| `docs/TROUBLESHOOTING.md` | Symptom → cause → fix |
+| `docs/IMAGE-FORMAT.md` | IMAGEWTY and the section table |
+| `docs/BUILD.md` | Build pipeline details |
+| `docs/SESSION-HANDOFF.md` | Handover notes |
 
-## Supported Gamepads
+## Supported gamepads
 
-| Gamepad | Connection | Status |
-|---------|-----------|--------|
-| Xbox Series X/S | BT/USB | Auto-detect |
-| PlayStation DualSense | BT/USB | Auto-detect |
-| DualShock 4 | BT/USB | Auto-detect |
-| Nintendo Switch Pro | BT/USB | Auto-detect |
-| Nintendo Joy-Con | BT | Auto-detect |
-| 8BitDo (all models) | BT/USB | Auto-detect |
-| GameSir T4 Pro/Mini | BT/USB | Auto-detect |
-| Generic USB HID | USB | Works |
-| Any BT gamepad | BT | Manual pairing |
-
-## Supported Systems (28)
-
-| Category | Systems |
-|----------|---------|
-| Nintendo | NES, SNES, Game Boy, GBC, GBA, N64, NDS |
-| Sega | Master System, Game Gear, Mega Drive, Sega CD, 32X |
-| Sony | PlayStation, PSP |
-| Arcade | FBNeo, MAME 2003+, Neo Geo |
-| Atari | 2600, 7800, Lynx, 8-bit |
-| Other | MSX, WonderSwan, Pokemon Mini, Amiga |
-| Engines | ScummVM, Doom |
+Switch Pro Controller, Joy-Con halves and the NSO N64 pad have layouts
+measured on this kernel. The stock 186 Android layouts cover Xbox, PlayStation
+and 8BitDo pads. Anything else falls back to `Generic.kl`.
 
 ## License
 
-PulsarOS core is MIT licensed. Third-party components retain their original
-licenses (RetroArch LGPL, Daijishou MIT, Kodi GPL, AOSP Apache 2.0).
-
-See [docs/LICENSE-STRATEGY.md](docs/LICENSE-STRATEGY.md) for details.
+MIT for the PulsarOS code. The stock Orange Pi image and the prebuilt APKs keep
+their own licences — DuckStation, for example, is CC BY-NC-ND 4.0 and must not
+be shipped commercially.
 
 ---
 
-# PulsarOS (Русский)
+# PulsarOS (русский)
 
-> Прошивка Android 12 для Orange Pi Zero 3 (Allwinner H618).
-> Готовая к использованию консоль для ретро-игр — прошей, подключи геймпад, играй.
+> Игровая прошивка Android 12 для Orange Pi Zero 3 (Allwinner H618).
+> Собирается перепаковкой стокового образа Orange Pi, а не сборкой AOSP.
 
-PulsarOS превращает Orange Pi Zero 3 в dedicated консоль для ретро-игр,
-подключённую к любому монитору или ТВ. Построена на Android 12 с полным
-ускорением GPU (Mali G31 MP2, OpenGL ES 3.2, Vulkan 1.1).
+**Версия:** 0.1.0-dev · **Состояние:** грузится и пригодна к работе, OOBE не сделан.
 
-## Возможности
+## Что реально работает
 
-- **Plug and play** — прошейте образ, подключите геймпад и начните играть
-- **28 игровых систем** — NES, SNES, Game Boy, GBA, N64, NDS, Mega Drive, PlayStation, PSP, аркады, Atari и др.
-- **Автоопределение геймпадов** — Xbox, PlayStation, Nintendo Switch Pro, 8BitDo и 30+ контроллеров
-- **Внешнее хранилище** — USB флешка с `PulsarOS/roms/` определяется автоматически
-- **Daijishou** — лаунчер с виджетами, темами и RetroAchievements
-- **RetroArch** — 24 оптимизированных ядра для ARM Cortex-A53
-- **Kodi** — воспроизведение видео и аудио
-- **OOBE мастер** — пошаговая настройка при первом запуске
+Проверено на плате, а не запланировано:
 
-## Железо
+| Область | Состояние |
+| --- | --- |
+| Загрузка | boot0 → boot_package → OP-TEE → u-boot → GPT → ядро → Android |
+| Сеть | Wi-Fi (`wlan0`, sprdwl_ng), ADB по TCP `:5555` (`adb root`) |
+| Хранилище | `/data` = 56 ГБ f2fs, userdata отформатирована заранее |
+| Фронтенд | Daijishou установлен; домашним остаётся стоковый `TvLauncher` |
+| RetroArch | 1.22.2 `ra32`, библиотеки распакованы, 30 ядер armv7 |
+| Эмуляторы | PPSSPP 1.20.4, DuckStation, Mupen64Plus FZ |
+| Видео | VLC 3.7.1 |
+| Браузер | TV Bro 2.1.6 — управляется пультом и геймпадом |
+| Файлы | добавлен AOSP DocumentsUI — в стоке его нет вообще |
+| Передача файлов | Primitive FTPd (FTP/SFTP/SCP по сети) |
+| Геймпады | Switch Pro починен по измеренным кодам; 190 раскладок |
+| Анимация | своя `bootanimation.zip`, 800×480@60 |
+| Деблоат | вычищено 17 стоковых тестовых пакетов (~54 МиБ) |
 
-| Плата | SoC | ОЗУ | Статус |
-|---|---|---|---|
-| Orange Pi Zero 3 | Allwinner H618, Mali G31 MP2 | 1–4 GB | Основная цель |
+## Что ещё не сделано
 
-## Требования
-
-- Orange Pi Zero 3 (любой вариант ОЗУ)
-- MicroSD карта (16GB+, рекомендуется A2)
-- Геймпад (USB или Bluetooth)
-- Блок питания (5V/3A USB-C)
-- Монитор/ТВ через micro-HDMI
+- **Логотип ядра** — u-boot всё ещё перезаписывает GPT в первый раздел;
+  исправление геометрии GPT проверяется.
+- **OOBE** — язык, лицензия, сеть, визард геймпада. Ничего из этого нет.
+- **Внешние носители** — дерево `PulsarOS/{game,video,music}` и автоскан.
+- **Веб-сервер** — пока только FTP.
+- **1080p** — экран поднимается в 1280×720, потому что HDMI DDC/EDID не
+  читается (`pinctrl_get for HDMI2.0 DDC fail`).
+- **Лончер и ядра в `/data`** — делается руками по ADB, в образе этого нет.
 
 ## Сборка
 
-### Быстрый старт
+Это не сборка AOSP. Пайплайн разбирает стоковый образ, заменяет `super` и
+загрузочные ресурсы и собирает обратно прошиваемый IMAGEWTY.
 
 ```bash
-# 1. Клонировать PulsarOS
-git clone https://github.com/one/PulsarOS.git
-cd PulsarOS
-
-# 2. Запустить интерактивную систему сборки
-bash scripts/build.sh
-
-# 3. Выбрать "1) Автосборка"
+scripts/fetch-apps.sh          # ~950 МБ APK, которых нет в git
+sudo bash scripts/build-image.sh   # → out/PulsarOS-YYYYMMDD.img
+sudo scripts/flash-linux.sh out/PulsarOS-YYYYMMDD.img /dev/sdX --yes
 ```
 
-Подробные инструкции: [docs/BUILD.md](docs/BUILD.md)
-
-### Структура сборки
-
-Система сборки v3.0 — модульная:
-- `scripts/build.sh` — точка входа (меню + автосборка)
-- `scripts/lib/` — общие функции (логирование, конфигурация)
-- `scripts/steps/` — по одному файлу на каждый шаг сборки
-
-Каждый шаг можно запустить отдельно:
-```bash
-source scripts/lib/common.sh
-source scripts/lib/config.sh
-source scripts/steps/03-build-cores.sh
-step_build_cores
-```
+Нужно ~11 ГБ под `work/` и около 20 минут на механическом диске.
 
 ## Документация
 
-| Документ | Описание |
-|----------|----------|
-| [BUILD.md](docs/BUILD.md) | Инструкция по сборке (EN+RU) |
-| [FLASHING.md](docs/FLASHING.md) | Прошивка на SD карту |
-| [IMAGE-FORMAT.md](docs/IMAGE-FORMAT.md) | Формат Allwinner IMAGEWTY |
-| [REPOSITORY-STRUCTURE.md](docs/REPOSITORY-STRUCTURE.md) | Структура репозитория |
-| [TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) | Решение проблем |
-| [HARDWARE.md](docs/HARDWARE.md) | Совместимое оборудование |
-| [SOURCES.md](docs/SOURCES.md) | Ссылки на исходники |
-| [LICENSE-STRATEGY.md](docs/LICENSE-STRATEGY.md) | Стратегия лицензирования |
-
-## Поддерживаемые системы (28)
-
-| Категория | Системы |
-|-----------|---------|
-| Nintendo | NES, SNES, Game Boy, GBC, GBA, N64, NDS |
-| Sega | Master System, Game Gear, Mega Drive, Sega CD, 32X |
-| Sony | PlayStation, PSP |
-| Аркады | FBNeo, MAME 2003+, Neo Geo |
-| Atari | 2600, 7800, Lynx, 8-bit |
-| Другие | MSX, WonderSwan, Pokemon Mini, Amiga |
-| Движки | ScummVM, Doom |
+`docs/STATUS.md` — текущее состояние и баги, `docs/FINDINGS-STOCK.md` — всё
+измеренное про сток, `docs/FLASHING.md` — раскладка карты,
+`docs/TROUBLESHOOTING.md` — симптом → причина → лечение.
 
 ## Лицензия
 
-Ядро PulsarOS — MIT. Сторонние компоненты сохраняют свои лицензии.
-См. [docs/LICENSE-STRATEGY.md](docs/LICENSE-STRATEGY.md).
-
----
-
-*Последнее обновление: 2026-07-17*
+Код PulsarOS — MIT. Стоковый образ Orange Pi и предустановленные APK сохраняют
+свои лицензии: например, DuckStation распространяется по CC BY-NC-ND 4.0 и в
+коммерческую поставку попасть не может.

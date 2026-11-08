@@ -196,3 +196,80 @@ Android armv7 либо официальный `pico8` (проприетарны�
 `IMAGEWTY` — не образ диска, `dd` его не пишет: нужен PhoenixCard
 (Windows). Режим — **StartUp**; в репозитории по этому поводу было
 противоречие, оно исправлено в `FLASHING.md`.
+
+## 11. Раздел `boot-resource` и логотип
+
+Стоковая секция `boot-resource.fex` — 5 876 736 байт, внутри FAT16 с меткой
+тома `Volumn`. Загрузочный сектор объявляет **128 МиБ** (`total_sectors =
+262144`) при файле 5.6 МБ, а в BPB `sectors per track = 0` и `heads = 0`.
+Из-за этого mtools отказывается открывать образ («zero number of heads or
+sectors»), и разбирать его приходится вручную (`tools/fatextract.py`).
+
+Содержимое (корень):
+
+| Файл | Размер | Назначение |
+| --- | --- | --- |
+| `BOOTLOGO.BMP` | 1 152 056 | 800×480, 24 bpp — логотип ядра |
+| `FASTBOOT.BMP` | 190 236 | 246×257 — экран fastboot |
+| `FONT24.SFT`, `FONT32.SFT` | 344 813 / 357 443 | шрифты boot_gui |
+| `MAGIC.BIN` | 512 | служебный маркер |
+| `BAT/` | ~1.2 МБ | кадры заряда: `BAT0`…`BAT10`, `BATTERY`, `BEMPTY`, `LOW_PWR` |
+
+Загрузочной анимации здесь нет — она лежит в `/system/media/bootanimation.zip`.
+
+**Три загрузочных модуля карты** — `boot0` (сектор 16), `boot_package`
+(сектор 32800) и `boot-resource` (первый раздел). Логотип u-boot читает из
+первого раздела по номеру, а не по имени.
+
+## 12. Шаблон GPT в образе (`sunxi_gpt.fex`)
+
+Секция №20, 8192 байта: protective MBR, заголовок GPT и 25 записей. Это шаблон
+PhoenixCard, а не то, что лежит на реальной карте — его `alt_lba` = 15 269 887
+соответствует карте на 7.28 ГиБ.
+
+Важное для нас:
+
+- `alt_lba = последний сектор`, `last_usable = alt_lba − 33`, то есть
+  Allwinner резервирует полный массив из 128 записей (32 сектора) в конце;
+- в шаблоне **нет** разделов `bootloader` и `boot-resource`;
+- адреса сдвинуты на +40 960 секторов относительно `sunxi_mbr.fex`
+  (`boot_a` там 205 824 против 164 864 в MBR).
+
+## 13. Что u-boot делает с «плохой» таблицей
+
+В бинарнике u-boot (`boot_package.fex`, u-boot по смещению 0x800) рядом стоят
+строки:
+
+```
+the GPT table is bad
+GPT:%-12s: %-12llx  %-12llx
+update gpt fail
+```
+
+Если резервная копия GPT не найдена там, где он её ждёт, он «чинит» таблицу.
+Запись при этом уходит за конец карты:
+
+```
+[mmc]: MMC: block number 0x75c1007 exceeds max(0x75c1000)
+[mmc]: write block failed
+update gpt fail
+```
+
+`0x75c1007` = размер карты + 7. После этого u-boot пишет копию GPT в первый
+раздел, уничтожая FAT с `bootlogo.bmp`. В логе это видно по порядку: FAT ещё
+монтируется (u-boot не находит только `lcd_compatible_index.txt`), затем
+`update gpt fail`, затем `Unrecognized filesystem type`.
+
+## 14. Чего в стоке нет
+
+- **`com.android.documentsui`** — файлового диалога нет вообще. Строка
+  `com.android.documentsui` встречается только в `framework.jar` и
+  `framework-res.apk`, самого APK нет. Любое приложение с
+  `ACTION_OPEN_DOCUMENT` падает с `ActivityNotFoundException`.
+- **GMS** — ожидаемо, но заодно нет и `F-Droid`.
+- **`fake08`** для PICO-8 (см. раздел 9).
+
+Провайдеры документов при этом на месте: `com.android.externalstorage`,
+`com.android.providers.downloads`, `com.android.providers.media` объявляют
+`DocumentsProvider`, то есть после добавления одного APK DocumentsUI всё
+работает.
